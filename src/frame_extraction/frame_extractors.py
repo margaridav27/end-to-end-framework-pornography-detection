@@ -22,11 +22,16 @@ class MiddleFrameExtractor(FrameExtractor):
   def __init__(self, data_loc : str, save_loc : str, n_frames : int):
     super().__init__()
 
+    assert os.path.exists(data_loc) and os.path.isdir(data_loc), "Invalid --data_loc argument."
+    assert os.path.exists(save_loc) and os.path.isdir(save_loc), "Invalid --save_loc argument."
+
     self.data_loc = data_loc
     self.save_loc = save_loc
     self.n_frames = n_frames
 
   def __call__(self):
+    data = { "frame": [], "frame_label": [] }
+
     for v in os.listdir(self.data_loc):
       if v.startswith("."): continue
 
@@ -46,8 +51,6 @@ class MiddleFrameExtractor(FrameExtractor):
       start_frame_i = frame_count // 2 - real_n_frames // 2
       video.set(cv.CAP_PROP_POS_FRAMES, start_frame_i)
 
-      data = { "frame": [], "frame_label": [] }
-
       for i in range(real_n_frames):
         _, frame = video.read()
 
@@ -59,6 +62,7 @@ class MiddleFrameExtractor(FrameExtractor):
 
         cv.imwrite(f"{self.save_loc}/{frame_name}", frame)
 
-      pd.DataFrame(data).to_csv(f"{self.save_loc}/data.csv")
+      self._close_video(video)
+    
+    pd.DataFrame(data).to_csv(f"{self.save_loc}/data.csv")
 
-      self._close_video()
