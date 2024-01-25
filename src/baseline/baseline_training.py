@@ -24,13 +24,13 @@ args = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print("Initializing the data...")
+print("Assembling data...")
 
 dataloaders, dataset_sizes, n_classes = init_data(args.data_loc, args.input_shape, args.batch_size)
 
 print(f"Loading the {args.model_name} model...")
 
-model = init_model(args.model_name, args.weights, args.freeze_layers, n_classes)
+model = init_model(args.model_name, n_classes, args.weights, args.freeze_layers)
 model = torch.nn.DataParallel(model)
 model = model.to(device)
 

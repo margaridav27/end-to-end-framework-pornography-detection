@@ -31,7 +31,7 @@ def split_data(df_frames : pd.DataFrame, val_size : int, test_size : int) -> Dic
 
 
 def load_split(data_loc : str, partitions : list=[]) -> Dict[str, pd.DataFrame]:
-  df = pd.read_csv(f"{data_loc}/split.csv", index_col=0)
+  df = pd.read_csv(f"{data_loc}/split.csv")
   if not partitions: partitions = list(df["partition"].unique())
   return { p: df[df["partition"] == p] for p in partitions }
 
@@ -39,15 +39,15 @@ def load_split(data_loc : str, partitions : list=[]) -> Dict[str, pd.DataFrame]:
 def save_split(save_loc : str, partitions : list, dfs : Dict[str, pd.DataFrame]):
   for p in partitions: dfs[p]["partition"] = p
   split = pd.concat(dfs.values(), ignore_index=True)
-  split.to_csv(f"{save_loc}/split.csv")
+  split.to_csv(f"{save_loc}/split.csv", index=False)
 
 
-def init_data(data_loc : str, input_shape : int, batch_size : int):
+def get_transforms(input_shape : int) -> Dict[str, transforms.Compose]:
   scale = 256
   mean = [0.485, 0.456, 0.406]
   std = [0.229, 0.224, 0.225]
 
-  data_transforms = {
+  return {
     "train": transforms.Compose([
       transforms.Resize(scale),
       transforms.RandomResizedCrop(input_shape),
@@ -59,10 +59,20 @@ def init_data(data_loc : str, input_shape : int, batch_size : int):
       transforms.CenterCrop(input_shape),
       transforms.ToTensor(),
       transforms.Normalize(mean, std)
-    ]) 
+    ]),
+    "test": transforms.Compose([
+      transforms.Resize(scale),
+      transforms.CenterCrop(input_shape),
+      transforms.ToTensor(),
+      transforms.Normalize(mean, std)
+    ])
   } 
 
-  df_frames = pd.read_csv(f"{data_loc}/data.csv", index_col=0)
+
+def init_data(data_loc : str, input_shape : int, batch_size : int):
+  data_transforms = get_transforms(input_shape) 
+
+  df_frames = pd.read_csv(f"{data_loc}/data.csv")
 
   partitions = ["train", "val", "test"]
   dfs = split_data(df_frames, 0.05, 0.2)
