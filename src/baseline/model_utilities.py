@@ -1,5 +1,6 @@
 import time
 import datetime
+import pandas as pd
 
 import torch
 import torch.nn as nn
@@ -18,9 +19,9 @@ def format_time(elapsed):
 
 def init_model(
     model_name : str, 
-    weights : str, 
-    freeze_layers : bool, 
-    n_classes : int
+    n_classes : int,
+    weights : str="IMAGENET1K_V1", 
+    freeze_layers : bool=True 
 ): 
   # Load pytorch model
   if model_name == "resnet50":
@@ -94,12 +95,12 @@ def run_epochs(
         # Zero the parameter gradients
         optimizer.zero_grad()
 
-        # Forward
+        # Forward pass
         # Track history if only in train
         with torch.set_grad_enabled(phase == "train"):
           outputs = model(inputs)
-          _, preds = torch.max(outputs, 1)
           loss = criterion(outputs, labels)
+          _, preds = torch.max(outputs, 1)
 
           # If in training phase, backward + optimize
           if phase == "train":
@@ -107,14 +108,14 @@ def run_epochs(
             optimizer.step()
 
         # Statistics 
-        run_loss += loss.item() * inputs.size(0)
-        run_corrects += torch.sum(preds == labels.data)
+        run_loss += loss.item()
+        run_corrects += torch.sum(preds == labels)
 
       if phase == "train":
         scheduler.step()
 
       epoch_loss = run_loss / dataset_sizes[phase]
-      epoch_acc = run_corrects.double() / dataset_sizes[phase]
+      epoch_acc = run_corrects / dataset_sizes[phase]
 
       print("{} Loss: {:.4f} | Acc: {:.4f}".format("Training" if phase == "train" else "Validation", epoch_loss, epoch_acc))
 
@@ -158,6 +159,38 @@ def train_model(
   
   return model
 
-# TODO
-def test_model():
-  return 
+
+def test_model(model, dataloader, dataset_size, device, save_loc):
+  # Measure the testing time
+  t0 = time.time()
+
+  targets = []
+  predictions = []
+
+  corrects = 0
+
+  model.eval() # Set model to evaluate mode
+
+  with torch.no_grad():
+    for inputs, labels in dataloader:
+      inputs = inputs.to(device)
+      labels = labels.to(device)
+
+      outputs = model(inputs) # Forward pass
+
+      _, preds = torch.max(outputs, 1)
+      corrects += torch.sum(preds == labels)
+      
+      predictions.extend(preds.cpu().numpy())
+      targets.extend(labels.cpu().numpy())
+
+  # Compute final accuracy
+  acc = corrects / dataset_size
+  
+  print("Testing complete!")
+  print("Total testing took {:}".format(format_time(time.time() - t0)))
+  print("Acc: {:.4f}\n".format(acc))
+
+  # Export predictions
+  print("Exporting predictions and ground-truth...")
+  pd.DataFrame({ "Prediction": predictions, "Target": targets }).to_csv(save_loc, index=False)
