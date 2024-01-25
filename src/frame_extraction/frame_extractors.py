@@ -31,7 +31,7 @@ class MiddleFrameExtractor(FrameExtractor):
     self.n_frames = n_frames
 
   def __call__(self):
-    data = { "frame": [], "frame_label": [] }
+    data = { "frame": [], "label": [] }
 
     for loc in self.data_loc:
       for v in os.listdir(loc):
@@ -60,7 +60,7 @@ class MiddleFrameExtractor(FrameExtractor):
           frame_label = 0 if "NonPorn" in v else 1
 
           data["frame"].append(frame_name)
-          data["frame_label"].append(frame_label)
+          data["label"].append(frame_label)
 
           cv.imwrite(f"{self.save_loc}/{frame_name}", frame)
 
