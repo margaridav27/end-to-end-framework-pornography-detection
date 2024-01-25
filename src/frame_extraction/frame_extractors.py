@@ -66,4 +66,4 @@ class MiddleFrameExtractor(FrameExtractor):
 
         self._close_video(video)
     
-    pd.DataFrame(data).to_csv(f"{self.save_loc}/data.csv")
+    pd.DataFrame(data).to_csv(f"{self.save_loc}/data.csv", index=False)
