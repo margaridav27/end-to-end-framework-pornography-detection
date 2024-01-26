@@ -4,29 +4,33 @@ from pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import argparse
+import random
+import numpy as np
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 
 
 parser = argparse.ArgumentParser(description="Testing a trained pytorch model")
-parser.add_argument('--data_loc', type=str, required=True)
-parser.add_argument('--save_loc', type=str, required=True)
-parser.add_argument('--state_dict_loc', type=str, required=True)
-parser.add_argument('--model_name', type=str, required=True)
-parser.add_argument('--batch_size', type=int, default=32)
-parser.add_argument('--input_shape', type=int, default=224)
+parser.add_argument("--data_loc", type=str, required=True)
+parser.add_argument("--save_loc", type=str, required=True)
+parser.add_argument("--state_dict_loc", type=str, required=True)
+parser.add_argument("--model_name", type=str, required=True)
+parser.add_argument("--batch_size", type=int, default=32)
+parser.add_argument("--input_shape", type=int, default=224)
 
 args = parser.parse_args()
 
-if not os.path.exists(args.save_loc):
-    os.makedirs(args.save_loc)
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# TODO seeding
+print("Seeding to ensure reproducibility...")
+
+seed = 42
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+if torch.cuda.is_available():
+	torch.cuda.manual_seed_all(seed)
 
 print("Assembling test partition...")
 
@@ -48,5 +52,10 @@ model = model.to(device)
 
 print("Model testing started...\n")
 
-results_save_loc = f"{args.save_loc}/{args.state_dict_loc.split('/')[-1].split('.')[0]}.csv"
+if not os.path.exists(args.save_loc):
+  os.makedirs(args.save_loc)
+
+results_save_loc = (f"{args.save_loc}/{args.state_dict_loc.split('/')[-1].split('.')[0]}.csv")
 test_model(model, dataloader, len(dataset), device, results_save_loc)
+
+print("Results saved. Testing process has finished.")

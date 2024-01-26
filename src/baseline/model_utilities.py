@@ -20,18 +20,17 @@ def format_time(elapsed):
 def init_model(
     model_name : str, 
     n_classes : int,
-    weights : str="IMAGENET1K_V1", 
+    weights : str=None, 
     freeze_layers : bool=True 
 ): 
   # Load pytorch model
-  if model_name == "resnet50":
+  if model_name == "resnet50": 
     model = models.resnet50(weights=weights)
-  elif model_name == "densenet121":
+  elif model_name == "densenet121": 
     model = models.densenet121(weights=weights)
-  elif model_name == "vgg16":
+  elif model_name == "vgg16": 
     model = models.vgg16(weights=weights)
-  else:
-    raise ValueError(f"Invalid model_name {model_name}")
+  else: raise ValueError(f"Invalid model_name {model_name}")
   
   if freeze_layers:
     for params in model.parameters(): 
@@ -66,15 +65,16 @@ def run_epochs(
   '''
     General function to run n_epochs epochs
   '''
+  
+  best_model = model.state_dict()
+  best_acc = 0.0
+
   for epoch_i in range(n_epochs):
     print('========== Start Epoch {:} / {:} =========='.format(epoch_i + 1, n_epochs))
     
     # Measure the training time per epoch
     t0 = time.time()
-
-    best_model = model.state_dict()
-    best_acc = 0.0
-
+    
     # Each epoch has a training and validation phase
     for phase in ["train", "val"]:
       if phase == "train":
@@ -117,7 +117,9 @@ def run_epochs(
       epoch_loss = run_loss / dataset_sizes[phase]
       epoch_acc = run_corrects / dataset_sizes[phase]
 
-      print("{} Loss: {:.4f} | Acc: {:.4f}".format("Training" if phase == "train" else "Validation", epoch_loss, epoch_acc))
+      print("{} Loss: {:.4f} | Acc: {:.4f}".format(
+        "Training" if phase == "train" else "Validation", epoch_loss, epoch_acc
+      ))
 
       if phase == "val":
         if epoch_acc > best_acc:
@@ -147,8 +149,16 @@ def train_model(
   # Measure the total training time for the whole run
   total_t0 = time.time()
 
-  best_model, best_acc = model.state_dict(), 0.0
-  best_model, best_acc = run_epochs(model, dataloaders, dataset_sizes, criterion, optimizer, scheduler, n_epochs, device)
+  best_model, best_acc = run_epochs(
+    model, 
+    dataloaders, 
+    dataset_sizes, 
+    criterion, 
+    optimizer, 
+    scheduler, 
+    n_epochs, 
+    device
+  )
 
   print("Training complete!")
   print("Total training took {:}".format(format_time(time.time() - total_t0)))
@@ -161,6 +171,10 @@ def train_model(
 
 
 def test_model(model, dataloader, dataset_size, device, save_loc):
+  '''
+    General function to test a model and save the results
+  '''
+    
   # Measure the testing time
   t0 = time.time()
 
