@@ -22,6 +22,7 @@ parser.add_argument("--input_shape", type=int, default=224)
 args = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("CUDA:", torch.cuda.is_available())
 
 print("Seeding to ensure reproducibility...")
 
@@ -30,7 +31,7 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 if torch.cuda.is_available():
-	torch.cuda.manual_seed_all(seed)
+    torch.cuda.manual_seed_all(seed)
 
 print("Assembling test partition...")
 
@@ -43,7 +44,7 @@ dataloader = DataLoader(dataset, args.batch_size)
 print(f"Loading model...")
 
 if not os.path.exists(args.state_dict_loc):
-  raise ValueError("Invalid --state_dict_loc argument.")
+    raise ValueError("Invalid --state_dict_loc argument.")
 
 state_dict = torch.load(args.state_dict_loc)
 model = init_model(args.model_name, n_classes)
@@ -53,9 +54,11 @@ model = model.to(device)
 print("Model testing started...\n")
 
 if not os.path.exists(args.save_loc):
-  os.makedirs(args.save_loc)
+    os.makedirs(args.save_loc)
 
-results_save_loc = (f"{args.save_loc}/{args.state_dict_loc.split('/')[-1].split('.')[0]}.csv")
+results_save_loc = (
+    f"{args.save_loc}/{args.state_dict_loc.split('/')[-1].split('.')[0]}.csv"
+)
 test_model(model, dataloader, len(dataset), device, results_save_loc)
 
 print("Results saved. Testing process has finished.")
