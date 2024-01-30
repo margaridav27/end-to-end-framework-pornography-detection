@@ -9,42 +9,42 @@
 echo "Running baseline testing job"
 
 # ResNet50 on Pornography-800
-python src/baseline/baseline_training.py \
+python src/baseline/baseline_testing.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed" \
        --save_loc "baseline/pornography-800/results" \
        --state_dict_loc "baseline/pornography-800/models/resnet50_freeze_layers_True.pth" \
        --model_name "resnet50"
 
 # ResNet50 on Pornography-2k
-python src/baseline/baseline_training.py \
+python src/baseline/baseline_testing.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed" \
        --save_loc "baseline/pornography-2k/results" \
        --state_dict_loc "baseline/pornography-2k/models/resnet50_freeze_layers_True.pth" \
        --model_name "resnet50"
 
 # DenseNet121 on Pornography-800
-python src/baseline/baseline_training.py \
+python src/baseline/baseline_testing.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed" \
        --save_loc "baseline/pornography-800/results" \
        --state_dict_loc "baseline/pornography-800/models/densenet121_freeze_layers_True.pth" \
        --model_name "densenet121"
 
 # DenseNet121 on Pornography-2k
-python src/baseline/baseline_training.py \
+python src/baseline/baseline_testing.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed" \
        --save_loc "baseline/pornography-2k/results" \
        --state_dict_loc "baseline/pornography-2k/models/densenet121_freeze_layers_True.pth" \
        --model_name "densenet121"
 
 # VGG16 on Pornography-800
-python src/baseline/baseline_training.py \
+python src/baseline/baseline_testing.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed" \
        --save_loc "baseline/pornography-800/results" \
        --state_dict_loc "baseline/pornography-800/models/vgg16_freeze_layers_True.pth" \
        --model_name "vgg16"
 
 # VGG16 on Pornography-2k
-python src/baseline/baseline_training.py \
+python src/baseline/baseline_testing.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed" \
        --save_loc "baseline/pornography-2k/results" \
        --state_dict_loc "baseline/pornography-2k/models/vgg16_freeze_layers_True.pth" \
