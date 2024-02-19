@@ -6,17 +6,19 @@
 #SBATCH -o slurm.%N.%j.out           # File containing STDOUT output
 #SBATCH -e slurm.%N.%j.err           # File containing STDERR output. If ommited, use STDOUT.
 
-echo "Running frame extraction job"
+echo "Running frame extraction job\n"
 
 # Pornography-800
+echo "Extracting frames from Pornography-800\n"
 python src/frame_extraction/frame_extraction.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornDifficulty" \
                   "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornEasy" \
                   "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vPorn" \
        --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed" \
-       --n_frames 80
+       --n_frames 40
 
 # Pornography-2k
+echo "Extracting frames from Pornography-2k\n"
 python src/frame_extraction/frame_extraction.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data/original" \
        --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed" \
