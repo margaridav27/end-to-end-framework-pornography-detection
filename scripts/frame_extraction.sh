@@ -14,13 +14,13 @@ python src/frame_extraction/frame_extraction.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornDifficulty" \
                   "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornEasy" \
                   "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vPorn" \
-       --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed" \
+       --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/middle_40" \
        --n_frames 40
 
 # Pornography-2k
 echo "Extracting frames from Pornography-2k\n"
 python src/frame_extraction/frame_extraction.py \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data/original" \
-       --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed" \
+       --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle_40" \
        --n_frames 40
 
