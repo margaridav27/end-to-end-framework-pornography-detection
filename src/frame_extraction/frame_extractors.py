@@ -51,23 +51,21 @@ class MiddleFrameExtractor(FrameExtractor):
         start_frame_i = frame_count // 2 - real_n_frames // 2
         video.set(cv.CAP_PROP_POS_FRAMES, start_frame_i)
 
-        extracted = 0
-        while extracted < real_n_frames:
+        for i in range(real_n_frames):
           ret, frame = video.read()
 
           if not ret:
             print(f"Failed to extract frame from {v}")
             continue
-          
-          extracted += 1
-          frame_name = f"{v.split('.')[0]}#{extracted}.jpg"
+
+          frame_name = f"{v.split('.')[0]}#{i}.jpg"
           frame_label = 0 if "NonPorn" in v else 1
 
           data["frame"].append(frame_name)
           data["label"].append(frame_label)
 
           cv.imwrite(f"{self.save_loc}/{frame_name}", frame)
-          
+
         self._close_video(video)
     
     pd.DataFrame(data).to_csv(f"{self.save_loc}/data.csv", index=False)
