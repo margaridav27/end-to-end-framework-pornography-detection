@@ -1,4 +1,4 @@
-from baseline.eval_utilities import calculate_metrics, calculate_iou
+from eval_utilities import calculate_metrics, calculate_iou
 
 import time
 import datetime
@@ -276,10 +276,9 @@ def test_model(model, dataloader, device, save_loc):
 
   # Compute final accuracy
   accuracy, precision, recall, f1 = calculate_metrics(targets, predictions)
-  iou = calculate_iou(targets, predictions)
   
   print("Testing complete!")
   print("Total testing took {:}".format(format_time(time.time() - t0)))
-  print("Accuracy: {:.4f} | Precision: {:.4f} | Recall: {:.4f} | F1 Score: {:.4f} | IOU Score: {:.4f}".format(accuracy, precision, recall, f1, iou))
+  print("Accuracy: {:.4f} | Precision: {:.4f} | Recall: {:.4f} | F1 Score: {:.4f}".format(accuracy, precision, recall, f1))
 
   pd.DataFrame({ "Target": targets, "Prediction": predictions }).to_csv(save_loc, index=False)

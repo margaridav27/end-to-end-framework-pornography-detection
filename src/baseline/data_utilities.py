@@ -58,11 +58,8 @@ def check_split(data_loc : str) -> bool:
 
 
 def log_split(split : Dict[str, pd.DataFrame]):
-  train, val, test = split.values()
-
-  print(f"Train: total ({len(train)}); porn ({len(train[train['label'] == 1])}); non-porn ({len(train[train['label'] == 0])})")
-  print(f"Validation: total ({len(val)}); porn ({len(val[val['label'] == 1])}); non-porn ({len(val[val['label'] == 0])})")
-  print(f"Test: total ({len(test)}); porn ({len(test[test['label'] == 1])}); non-porn ({len(test[test['label'] == 0])})\n")
+  for partition, df in split.items():
+    print(f"{partition}: total ({len(df)}); porn ({len(df[df['label'] == 1])}); non-porn ({len(df[df['label'] == 0])})")
   
 
 def get_transforms(input_shape : int) -> Dict[str, transforms.Compose]:
