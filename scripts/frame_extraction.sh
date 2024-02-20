@@ -11,8 +11,8 @@ echo "Running frame extraction job\n"
 # Pornography-800
 echo "Extracting frames from Pornography-800\n"
 python src/frame_extraction/frame_extraction.py \
-       --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornDifficulty" \
-                  "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornEasy" \
+       --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornEasy" \
+                  "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornDifficulty" \
                   "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vPorn" \
        --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/middle_40" \
        --n_frames 40
