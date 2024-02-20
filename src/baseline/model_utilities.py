@@ -1,4 +1,4 @@
-from eval_utilities import calculate_metrics, calculate_iou
+from baseline.eval_utilities import calculate_metrics, calculate_iou
 
 import time
 import datetime
@@ -72,8 +72,6 @@ def get_pytorch_model(model_name : str, weights : str=None):
     return models.vgg16(weights=weights)
   elif model_name == "vgg19": 
     return models.vgg19(weights=weights)
-  elif model_name == "mobilenetv1":
-    return models.mobilenet(weights=weights)
   elif model_name == "mobilenetv2":
     return models.mobilenet_v2(weights=weights)
   else: 
