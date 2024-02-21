@@ -50,7 +50,7 @@ model = model.to(device)
 
 print("Model training started...\n")
 
-best_model, accuracies, losses = train_model(
+best_model, metrics = train_model(
     model,
     dataloaders,
     dataset_sizes,
@@ -73,12 +73,7 @@ print("Model saved. Saving metrics...")
 if not os.path.exists(args.metrics_save_loc):
     os.makedirs(args.metrics_save_loc)
 
-losses_save_loc = f"{args.metrics_save_loc}/losses_{model_name}"
-pd.DataFrame(losses).to_csv(f"{losses_save_loc}.csv", index=False)
-save_train_val_curves(f"{losses_save_loc}.png", losses, "Loss")
-
-accuracies_save_loc = f"{args.metrics_save_loc}/accuracies_{model_name}"
-pd.DataFrame(accuracies).to_csv(f"{accuracies_save_loc}.csv", index=False)
-save_train_val_curves(f"{accuracies_save_loc}.png", accuracies, "Accuracy")
+pd.DataFrame(metrics).to_csv(f"{args.metrics_save_loc}/{model_name}.csv", index=False)
+save_train_val_curves(f"{args.metrics_save_loc}/{model_name}.png", metrics)
 
 print("Metrics saved. Training process has finished.\n\n")

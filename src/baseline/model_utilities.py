@@ -1,4 +1,4 @@
-from eval_utilities import calculate_metrics, calculate_iou
+from eval_utilities import calculate_metrics
 
 import time
 import datetime
@@ -133,12 +133,17 @@ def run_epochs(
   
   best_model = model.state_dict()
   best_acc = 0.0
+  best_epoch = 1
 
-  losses = { "train": [], "val": [] }
-  accuracies = { "train": [], "val": [] }
+  metrics = { 
+    "train_loss": [], 
+    "train_acc": [], 
+    "val_loss": [],
+    "val_acc": []
+  }
 
   for epoch_i in range(n_epochs):
-    print('========== Start Epoch {:} / {:} =========='.format(epoch_i + 1, n_epochs))
+    print('========== Start Epoch {} / {} =========='.format(epoch_i + 1, n_epochs))
     
     # Measure the training time per epoch
     t0 = time.time()
@@ -186,18 +191,19 @@ def run_epochs(
       epoch_acc = running_corrects.double() / dataset_sizes[phase]
       
       print("{} Loss: {:.4f} | Acc: {:.4f}".format("Training" if phase == "train" else "Validation", epoch_loss, epoch_acc))
-      losses[phase].append(epoch_loss)
-      accuracies[phase].append(epoch_acc.item())
+      metrics[f"{phase}_loss"].append(epoch_loss)
+      metrics[f"{phase}_acc"].append(epoch_acc.item())
 
-      if phase == "val":
-        if epoch_acc > best_acc:
-          best_acc = epoch_acc
-          best_model = model.state_dict()
+      if phase == "val" and epoch_acc > best_acc:
+        best_acc = epoch_acc
+        best_epoch = epoch_i + 1
+        best_model = model.state_dict()
+        print("Updated best model")
 
-    print("Epoch took {:}".format(format_time(time.time() - t0)))
-    print('=========== End Epoch {:} / {:} ===========\n'.format(epoch_i + 1, n_epochs))
+    print("Epoch took {}".format(format_time(time.time() - t0)))
+    print('=========== End Epoch {} / {} ===========\n'.format(epoch_i + 1, n_epochs))
 
-  return best_model, best_acc, accuracies, losses
+  return best_model, best_acc, best_epoch, metrics
   
   
 def train_model(
@@ -225,7 +231,7 @@ def train_model(
   # Measure the total training time for the whole run
   total_t0 = time.time()
 
-  best_model, best_acc, accuracies, losses = run_epochs(
+  best_model, best_acc, best_epoch, metrics = run_epochs(
     model, 
     dataloaders, 
     dataset_sizes, 
@@ -237,13 +243,13 @@ def train_model(
   )
 
   print("Training complete!")
-  print("Total training took {:}".format(format_time(time.time() - total_t0)))
-  print("Best Acc: {:.4f}\n".format(best_acc))
+  print("Total training took {}".format(format_time(time.time() - total_t0)))
+  print("Best Acc: {:.4f} (epoch {})\n".format(best_acc, best_epoch))
   
   # Load best model
   model.load_state_dict(best_model)
   
-  return model, accuracies, losses
+  return model, metrics
 
 
 def test_model(model, dataloader, device, save_loc):
