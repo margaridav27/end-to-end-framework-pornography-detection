@@ -20,28 +20,30 @@ def format_time(elapsed):
   return str(datetime.timedelta(seconds=elapsed_rounded)) # Format as hh:mm:ss
 
 
-class MixedPooling(nn.Module):
-  def __init__(self, kernel_size, stride=None, padding=0):
-    super(MixedPooling, self).__init__()
-    self.avg_pool = nn.AvgPool2d(kernel_size, stride=stride, padding=padding)
-    self.max_pool = nn.MaxPool2d(kernel_size, stride=stride, padding=padding)
-
-  def forward(self, x):
-    avg_out = self.avg_pool(x)
-    max_out = self.max_pool(x)
-    return torch.cat((avg_out, max_out), dim=1)
-    
-
-def add_mixed_pooling_and_batch_norm(module):
+def add_mixed_pooling_and_batch_norm(model, module):
   if isinstance(module, nn.Conv2d):
     # Add BatchNorm2d after each Conv2d 
-    return nn.Sequential(module, nn.BatchNorm2d(module.out_channels), nn.ReLU(inplace=True))
+    # Only if Conv2d is not already followed by BatchNorm2d
+    conv_followed_by_bn = conv = False
+    for next in model.modules():
+      if conv and isinstance(next, nn.BatchNorm2d):
+        conv_followed_by_bn = True
+        break
+      if isinstance(next, nn.Conv2d):
+        conv = True
+    if conv_followed_by_bn:
+      return module
+    else:
+      return nn.Sequential(module, nn.BatchNorm2d(module.out_channels))
   elif isinstance(module, nn.MaxPool2d):
     # Replace MaxPool2d with MixedPooling
-    return MixedPooling(kernel_size=module.kernel_size, stride=module.stride, padding=module.padding)
+    return nn.Sequential(
+      nn.MaxPool2d(kernel_size=module.kernel_size, stride=module.stride, padding=module.padding),
+      nn.AvgPool2d(kernel_size=module.kernel_size, stride=module.stride, padding=module.padding)
+    )
   elif isinstance(module, nn.Sequential):
     # Recursively go through Sequential modules
-    return nn.Sequential(*(add_mixed_pooling_and_batch_norm(m) for m in module))
+    return nn.Sequential(*(add_mixed_pooling_and_batch_norm(model, m) for m in module))
   else:
     return module
   
@@ -49,7 +51,7 @@ def add_mixed_pooling_and_batch_norm(module):
 def optimize_model(model):
   # Apply changes recursively
   for name, module in model.named_children():
-    setattr(model, name, add_mixed_pooling_and_batch_norm(module))
+    setattr(model, name, add_mixed_pooling_and_batch_norm(model, module))
   return model
 
 
