@@ -1,4 +1,4 @@
-from pornography_frame_dataset import PornographyFrameDataset
+from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 from typing import Dict

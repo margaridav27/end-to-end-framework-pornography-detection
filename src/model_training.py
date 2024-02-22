@@ -1,6 +1,6 @@
-from data_utilities import init_data
-from model_utilities import init_model, train_model
-from eval_utilities import save_train_val_curves
+from src.utils.data import init_data
+from src.utils.model import init_model, train_model
+from src.utils.evaluation import save_train_val_curves
 
 import os
 import argparse

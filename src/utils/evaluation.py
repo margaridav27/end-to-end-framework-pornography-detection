@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from sklearn.metrics import (
   accuracy_score, 
   precision_score, 
@@ -5,8 +6,6 @@ from sklearn.metrics import (
   f1_score
 )
 
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 
 def calculate_metrics(labels, preds):
     accuracy = accuracy_score(labels, preds)
@@ -14,13 +13,6 @@ def calculate_metrics(labels, preds):
     recall = recall_score(labels, preds)
     f1 = f1_score(labels, preds)
     return accuracy, precision, recall, f1
-
-
-def calculate_iou(labels, preds):
-    intersection = (preds & labels).float().sum((1, 2))
-    union = (preds | labels).float().sum((1, 2))
-    iou = (intersection / union).mean().item()
-    return iou
 
 
 def save_train_val_curves(save_loc, values):

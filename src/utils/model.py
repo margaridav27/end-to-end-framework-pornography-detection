@@ -1,23 +1,13 @@
-from eval_utilities import calculate_metrics
+from src.utils.misc import format_time
+from src.utils.evaluation import calculate_metrics
 
 import time
-import datetime
 import pandas as pd
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
-
-
-# TODO move this function to somewhere else
-def format_time(elapsed):
-  '''
-    Takes a time in seconds and returns a string hh:mm:ss
-  '''
-  
-  elapsed_rounded = int(round((elapsed))) # Round to the nearest second
-  return str(datetime.timedelta(seconds=elapsed_rounded)) # Format as hh:mm:ss
 
 
 def add_mixed_pooling_and_batch_norm(model, module):

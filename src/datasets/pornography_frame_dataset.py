@@ -2,7 +2,6 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 
-# TODO maybe move to another module specific for datasets
 class PornographyFrameDataset(Dataset):
   def __init__(self, data_loc, df, transform=None):
     self.data_loc = data_loc
@@ -23,4 +22,3 @@ class PornographyFrameDataset(Dataset):
       frame = self.transform(frame)
 
     return frame, self.labels[index]
-  

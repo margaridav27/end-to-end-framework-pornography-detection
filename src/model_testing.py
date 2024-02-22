@@ -1,6 +1,6 @@
-from data_utilities import load_split, get_transforms
-from model_utilities import init_model, test_model
-from pornography_frame_dataset import PornographyFrameDataset
+from src.utils.data import load_split, get_transforms
+from src.utils.model import init_model, test_model
+from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import argparse
