@@ -31,7 +31,7 @@ args = parser.parse_args()
 
 
 # FIXME: Maybe add a --gpu_id to 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
 print("Device:", device)
 
 seed = 42
