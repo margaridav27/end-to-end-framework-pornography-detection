@@ -13,6 +13,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "resnet50"
         
 echo "Training ResNet101"
@@ -20,6 +21,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "resnet101"
 
 echo "Training ResNet152"
@@ -27,6 +29,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "resnet152"
 
 echo "Training DenseNet121"
@@ -34,6 +37,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "densenet121"
 
 echo "Training DenseNet169"
@@ -41,6 +45,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "densenet169"
 
 echo "Training DenseNet201"
@@ -48,6 +53,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "densenet201"
 
 echo "Training AlexNet"
@@ -55,6 +61,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "alexnet"
 
 echo "Training VGG16"
@@ -62,6 +69,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "vgg16"
 
 echo "Training VGG19"
@@ -69,6 +77,7 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "vgg19"
 
 echo "Training MobileNetV2"
@@ -76,4 +85,5 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --model_save_loc "baseline/pornography-2k/models" \
        --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --epochs 10 \
        --model_name "mobilenetv2"
