@@ -43,7 +43,8 @@ if not os.path.exists(args.state_dict_loc):
 
 state_dict = torch.load(args.state_dict_loc)
 model = init_model(args.model_name)
-model.load_state_dict(state_dict, strict=False)
+model = torch.nn.DataParallel(model)
+model.load_state_dict(state_dict)
 model = model.to(device)
 
 print("Model testing started...")
