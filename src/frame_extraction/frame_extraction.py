@@ -1,7 +1,7 @@
 import os
 import argparse
 
-from frame_extractors import MiddleFrameExtractor
+from src.frame_extraction.frame_extractors import MiddleFrameExtractor
 
 parser = argparse.ArgumentParser(description="Extracting frames from dataset")
 
