@@ -52,7 +52,7 @@ print("Model testing started...")
 if not os.path.exists(args.save_loc):
     os.makedirs(args.save_loc)
 
-results_save_loc = f"{args.save_loc}/{args.state_dict_loc.split('/')[-1].split('.')[0]}.csv"
+results_save_loc = f"{args.save_loc}/{args.state_dict_loc.split('/')[-1].split('.')[0]}"
 
 test_model(model, dataloader, device, results_save_loc)
 

@@ -1,5 +1,5 @@
 from src.utils.misc import format_time
-from src.utils.evaluation import calculate_metrics
+from src.utils.evaluation import calculate_metrics, save_confusion_matrix
 
 import time
 import pandas as pd
@@ -84,7 +84,7 @@ def modify_last_fcl(model, model_name):
     features = list(model.classifier.children())[:-1]
     features.extend([nn.Linear(n_features, 2)])
     model.classifier = nn.Sequential(*features)
-  else:
+  else: # e.g., resnet
     n_features = model.fc.in_features
     model.fc = nn.Linear(n_features, 2)
 
@@ -153,7 +153,7 @@ def run_epochs(
       running_corrects = 0
 
       # Iterate over data
-      for inputs, labels in dataloaders[phase]:
+      for _, inputs, labels in dataloaders[phase]:
         inputs = inputs.to(device)
         labels = labels.to(device)
 
@@ -252,25 +252,25 @@ def test_model(model, dataloader, device, save_loc):
   # Measure the testing time
   t0 = time.time()
 
+  frame_names = []
   targets = []
   predictions = []
-
-  corrects = 0
+  predictions_confidence = []
 
   model.eval() # Set model to evaluate mode
 
   with torch.no_grad():
-    for inputs, labels in dataloader:
+    for names, inputs, labels in dataloader:
       inputs = inputs.to(device)
       labels = labels.to(device)
 
       outputs = model(inputs) # Forward pass
-
-      _, preds = torch.max(outputs, 1)
-      corrects += torch.sum(preds == labels)
+      confidences, preds = torch.max(F.softmax(outputs, dim=1), dim=1)
       
-      predictions.extend(preds.cpu().numpy())
+      frame_names.extend(names)
       targets.extend(labels.cpu().numpy())
+      predictions.extend(preds.cpu().numpy())
+      predictions_confidence.extend(confidences.cpu().numpy())
 
   # Compute final accuracy
   accuracy, precision, recall, f1 = calculate_metrics(targets, predictions)
@@ -279,4 +279,11 @@ def test_model(model, dataloader, device, save_loc):
   print("Total testing took {:}".format(format_time(time.time() - t0)))
   print("Accuracy: {:.4f} | Precision: {:.4f} | Recall: {:.4f} | F1 Score: {:.4f}".format(accuracy, precision, recall, f1))
 
-  pd.DataFrame({ "Target": targets, "Prediction": predictions }).to_csv(save_loc, index=False)
+  pd.DataFrame({ 
+    "Frame": frame_names,
+    "Target": targets, 
+    "Prediction": predictions,
+    "Confidence": predictions_confidence 
+  }).to_csv(f"{save_loc}.csv", index=False)
+
+  save_confusion_matrix(f"{save_loc}_confusion_matrix.png", targets, predictions)

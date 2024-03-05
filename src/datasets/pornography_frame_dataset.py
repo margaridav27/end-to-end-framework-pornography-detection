@@ -16,9 +16,10 @@ class PornographyFrameDataset(Dataset):
     if torch.is_tensor(index):
       index = index.tolist()
 
-    frame_path = f"{self.data_loc}/{self.frames[index]}"
+    frame_name = self.frames[index]
+    frame_path = f"{self.data_loc}/{frame_name}"
     frame = Image.open(frame_path).convert("RGB")
     if self.transform:
       frame = self.transform(frame)
 
-    return frame, self.labels[index]
+    return frame_name, frame, self.labels[index]

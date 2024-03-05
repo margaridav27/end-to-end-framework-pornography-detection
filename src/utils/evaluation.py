@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import (
+  ConfusionMatrixDisplay,
+  confusion_matrix,
   accuracy_score, 
   precision_score, 
   recall_score, 
@@ -35,3 +37,16 @@ def save_train_val_curves(save_loc, values):
     fig.legend(handles, labels, loc="upper center")
 
     fig.savefig(save_loc)
+
+
+def save_confusion_matrix(save_loc, y_true, y_pred):
+    cm = confusion_matrix(y_true, y_pred)
+
+    cm_display = ConfusionMatrixDisplay(
+        confusion_matrix=cm,
+        display_labels=[False, True]
+    )
+    cm_display.plot()
+
+    plt.title("Confusion Matrix")
+    plt.savefig(save_loc)
