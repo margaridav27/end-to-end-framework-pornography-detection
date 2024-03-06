@@ -11,8 +11,8 @@ echo "Running training job (no frozen layers, optimized) on Pornography-2k"
 echo "Training ResNet50"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "resnet50" \
        --optimized
@@ -20,8 +20,8 @@ python -m src.model_training \
 echo "Training ResNet101"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "resnet101" \
        --optimized
@@ -29,8 +29,8 @@ python -m src.model_training \
 echo "Training ResNet152"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "resnet152" \
        --optimized
@@ -38,8 +38,8 @@ python -m src.model_training \
 echo "Training DenseNet121"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "densenet121" \
        --optimized
@@ -47,8 +47,8 @@ python -m src.model_training \
 echo "Training DenseNet169"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "densenet169" \
        --optimized
@@ -56,8 +56,8 @@ python -m src.model_training \
 echo "Training DenseNet201"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "densenet201" \
        --optimized
@@ -65,8 +65,8 @@ python -m src.model_training \
 echo "Training AlexNet"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "alexnet" \
        --optimized
@@ -74,8 +74,8 @@ python -m src.model_training \
 echo "Training VGG16"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "vgg16" \
        --optimized
@@ -83,8 +83,8 @@ python -m src.model_training \
 echo "Training VGG19"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "vgg19" \
        --optimized
@@ -92,8 +92,8 @@ python -m src.model_training \
 echo "Training MobileNetV2"
 python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "baseline/pornography-2k/models" \
-       --metrics_save_loc "baseline/pornography-2k/metrics" \
+       --model_save_loc "results/no-freeze-opt/pornography-2k/models" \
+       --metrics_save_loc "results/no-freeze-opt/pornography-2k/metrics" \
        --epochs 10 \
        --model_name "mobilenetv2" \
        --optimized
