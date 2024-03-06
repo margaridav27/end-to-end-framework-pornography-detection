@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min12GB               
-#SBATCH --qos=gpu_min12GB_ext                 
+#SBATCH --partition=gpu_min24GB               
+#SBATCH --qos=gpu_min24GB_ext                 
 #SBATCH --job-name=training_no_freeze_2k
 #SBATCH -o slurm.%N.%j.out               
 #SBATCH -e slurm.%N.%j.err
