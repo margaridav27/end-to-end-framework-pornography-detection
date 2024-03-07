@@ -15,7 +15,4 @@ if not os.path.exists(args.save_loc):
     os.makedirs(args.save_loc)
 
 extractor = MiddleFrameExtractor(args.data_loc, args.save_loc, args.n_frames)
-
-print("-"*20 + " Frame extraction started " + "-"*20)
 extractor()
-print("-"*19 + " Frame extraction completed " + "-"*19)
