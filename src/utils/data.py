@@ -1,12 +1,13 @@
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
-from typing import Dict
+from typing import Dict, List
 import pandas as pd 
 from sklearn.model_selection import train_test_split
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 from torch.utils.data import DataLoader
-from torchvision import transforms
 
 
 def split_data(df_frames : pd.DataFrame, split : list) -> Dict[str, pd.DataFrame]:
@@ -62,36 +63,46 @@ def log_split(split : Dict[str, pd.DataFrame]):
     print(f"{partition}: total ({len(df)}); porn ({len(df[df['label'] == 1])}); non-porn ({len(df[df['label'] == 0])})")
   
 
-def get_transforms(input_shape : int) -> Dict[str, transforms.Compose]:
-  scale = 256
-  mean = [0.485, 0.456, 0.406]
-  std = [0.229, 0.224, 0.225]
+def get_transforms(
+    data_aug : bool,
+    input_shape : int, 
+    norm_mean : List[float],
+    norm_std : List[float]
+  ) -> Dict[str, A.Compose]:
+  
+  train_transforms = [
+    A.RandomCropFromBorders(),
+    A.Resize(height=input_shape, width=input_shape),
+    A.RandomRotate90(),
+    A.ColorJitter(),
+    A.RandomGamma(),
+    A.Normalize(mean=norm_mean, std=norm_std),
+    ToTensorV2()
+  ]
 
-  # TODO: add support for data aug
+  val_and_test_transforms = [
+    A.Resize(height=input_shape, width=input_shape),
+    A.Normalize(mean=norm_mean, std=norm_std),
+    ToTensorV2(),
+  ]
+
   return {
-    "train": transforms.Compose([
-      transforms.Resize(scale),
-      transforms.CenterCrop(input_shape),
-      transforms.ToTensor(),
-      transforms.Normalize(mean, std)
-    ]),
-    "val": transforms.Compose([
-      transforms.Resize(scale),
-      transforms.CenterCrop(input_shape),
-      transforms.ToTensor(),
-      transforms.Normalize(mean, std)
-    ]),
-    "test": transforms.Compose([
-      transforms.Resize(scale),
-      transforms.CenterCrop(input_shape),
-      transforms.ToTensor(),
-      transforms.Normalize(mean, std)
-    ])
+    "train": A.Compose(train_transforms if data_aug else val_and_test_transforms),
+    "val": A.Compose(val_and_test_transforms),
+    "test": A.Compose(val_and_test_transforms)
   } 
 
 
-def init_data(data_loc : str, input_shape : int, batch_size : int, split : list):
-  data_transforms = get_transforms(input_shape) 
+def init_data(
+    data_loc : str, 
+    data_aug : bool, 
+    batch_size : int, 
+    split : list,
+    input_shape : int,
+    norm_mean : List[float],
+    norm_std : List[float] 
+  ): 
+  data_transforms = get_transforms(data_aug, input_shape, norm_mean, norm_std) 
 
   df_frames = pd.read_csv(f"{data_loc}/data.csv")
 

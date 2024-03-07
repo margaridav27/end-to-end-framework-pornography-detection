@@ -23,9 +23,11 @@ parser.add_argument("--epochs", type=int, default=20)
 parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--optimizer", type=str, default="sgd")
 parser.add_argument("--optimized", action="store_true", default=False)
-parser.add_argument("--input_shape", type=int, default=224)
-parser.add_argument("--data_aug", action="store_true", default=False)
 parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
+parser.add_argument("--data_aug", action="store_true", default=False)
+parser.add_argument("--input_shape", type=int, default=224)
+parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
+parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
 
 args = parser.parse_args()
 
@@ -41,7 +43,13 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(seed)
 
 dataloaders, dataset_sizes = init_data(
-    args.data_loc, args.input_shape, args.batch_size, args.split
+    args.data_loc, 
+    args.data_aug, 
+    args.batch_size, 
+    args.split,
+    args.input_shape, 
+    args.norm_mean,
+    args.norm_std
 )
 
 print(f"Loading {args.model_name}...")
@@ -61,21 +69,17 @@ best_model, metrics = train_model(
     device,
 )
 
-print("Saving the best model...")
+print("Saving the best model and corresponding metrics...")
 
 if not os.path.exists(args.model_save_loc):
     os.makedirs(args.model_save_loc)
 
-model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_optimized_{args.optimized}"
-model_save_loc = f"{args.model_save_loc}/model_{model_name}.pth"
-torch.save(best_model.state_dict(), model_save_loc)
-
-print("Model saved. Saving metrics...")
-
 if not os.path.exists(args.metrics_save_loc):
     os.makedirs(args.metrics_save_loc)
 
+model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_optimized_{args.optimized}_aug_{args.data_aug}"
+torch.save(best_model.state_dict(), f"{args.model_save_loc}/{model_name}.pth")
 pd.DataFrame(metrics).to_csv(f"{args.metrics_save_loc}/{model_name}.csv", index=False)
 save_train_val_curves(f"{args.metrics_save_loc}/{model_name}.png", metrics)
 
-print("Metrics saved. Training process has finished.\n\n")
+print("Model and metrics saved. Training process has finished.\n\n")

@@ -1,9 +1,11 @@
+import pandas as pd
+import cv2
+import albumentations as A
 import torch
 from torch.utils.data import Dataset
-from PIL import Image
 
 class PornographyFrameDataset(Dataset):
-  def __init__(self, data_loc, df, transform=None):
+  def __init__(self, data_loc : str, df : pd.DataFrame, transform : A.Compose=None):
     self.data_loc = data_loc
     self.frames = df["frame"].tolist()
     self.labels = df["label"].tolist()
@@ -18,8 +20,10 @@ class PornographyFrameDataset(Dataset):
 
     frame_name = self.frames[index]
     frame_path = f"{self.data_loc}/{frame_name}"
-    frame = Image.open(frame_path).convert("RGB")
+    frame = cv2.imread(frame_path)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
     if self.transform:
-      frame = self.transform(frame)
+      frame = self.transform(image=frame)["image"]
 
     return frame_name, frame, self.labels[index]
