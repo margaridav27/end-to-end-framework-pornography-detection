@@ -12,7 +12,6 @@ import torch
 
 
 parser = argparse.ArgumentParser(description="Training a pytorch model to classify pornographic content")
-parser.add_argument("--gpu_id", type=int, default=0, required=False, help="The GPU ID.")
 parser.add_argument("--data_loc", type=str, required=True)
 parser.add_argument("--model_save_loc", type=str, required=True)
 parser.add_argument("--metrics_save_loc", type=str, required=True)
@@ -32,7 +31,7 @@ parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 
 args = parser.parse_args()
 
 
-device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
+device = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
 print("Device:", device)
 
 seed = 42
