@@ -10,7 +10,7 @@ from albumentations.pytorch import ToTensorV2
 from torch.utils.data import DataLoader
 
 
-def split_data(df_frames : pd.DataFrame, split : List[float]) -> Dict[str, pd.DataFrame]:
+def split_data(df_frames : pd.DataFrame, split_sizes : List[float]) -> Dict[str, pd.DataFrame]:
   df_frames["video"] = [frame_name.split("#")[0] for frame_name in df_frames["frame"]]
 
   agg = { "video": "first", "label": "first" }
@@ -20,7 +20,7 @@ def split_data(df_frames : pd.DataFrame, split : List[float]) -> Dict[str, pd.Da
 
   df_frames = df_frames.drop("video", axis=1)
 
-  val_size, test_size = split
+  val_size, test_size = split_sizes
   real_val_size = (1 - test_size) * val_size
 
   train_videos, test_videos = train_test_split(df_videos, test_size=0.2, random_state=42)
@@ -39,10 +39,10 @@ def split_data(df_frames : pd.DataFrame, split : List[float]) -> Dict[str, pd.Da
 
 def load_split(
     data_loc : str, 
-    split : List[float], 
+    split_sizes : List[float], 
     partitions : List[str]=[]
 ) -> Dict[str, pd.DataFrame]:
-  df = pd.read_csv(f"{data_loc}/split_{split[0]*100}_{split[1]*100}.csv")
+  df = pd.read_csv(f"{data_loc}/split_{split_sizes[0]*100}_{split_sizes[1]*100}.csv")
   if not partitions: partitions = list(df["partition"].unique())
 
   split = { p: df[df["partition"] == p] for p in partitions }
@@ -54,17 +54,17 @@ def load_split(
 
 def save_split(
     save_loc : str, 
-    split : List[float], 
+    split_sizes : List[float], 
     partitions : List[str], 
     dfs : Dict[str, pd.DataFrame]
 ):
   for p in partitions: dfs[p]["partition"] = p
   split = pd.concat(dfs.values(), ignore_index=True)
-  split.to_csv(f"{save_loc}/split_{split[0]*100}_{split[1]*100}.csv", index=False)
+  split.to_csv(f"{save_loc}/split_{split_sizes[0]*100}_{split_sizes[1]*100}.csv", index=False)
 
 
-def check_split(data_loc : str, split : List[float]) -> bool:
-  return os.path.isfile(f"{data_loc}/split_{split[0]*100}_{split[1]*100}.csv")
+def check_split(data_loc : str, split_sizes : List[float]) -> bool:
+  return os.path.isfile(f"{data_loc}/split_{split_sizes[0]*100}_{split_sizes[1]*100}.csv")
 
 
 def log_split(split : Dict[str, pd.DataFrame]):
@@ -106,7 +106,7 @@ def init_data(
     data_loc : str, 
     data_aug : bool, 
     batch_size : int, 
-    split : list,
+    split_sizes : List[float],
     input_shape : int,
     norm_mean : List[float],
     norm_std : List[float] 
