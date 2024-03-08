@@ -10,13 +10,12 @@ echo "Running training job (with data augmentation) on Pornography-2k"
 
 echo "Training ResNet50"
 python -m src.model_training \
-       --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
-       --model_save_loc "results/data-aug/pornography-2k/models" \
-       --metrics_save_loc "results/data-aug/pornography-2k/metrics" \
+       --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20" \
+       --model_save_loc "results/even-20/data-aug/pornography-2k/models" \
+       --metrics_save_loc "results/even-20/data-aug/pornography-2k/metrics" \
        --model_name "resnet50" \
        --epochs 50 \
-       --split 0.15 0.15 \
-       --data_aug \
+       --data_aug
         
 # echo "Training ResNet101"
 # python -m src.model_training \
