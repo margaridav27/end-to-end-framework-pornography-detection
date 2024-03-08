@@ -42,7 +42,7 @@ def load_split(
     split_sizes : List[float], 
     partitions : List[str]=[]
 ) -> Dict[str, pd.DataFrame]:
-  df = pd.read_csv(f"{data_loc}/split_{split_sizes[0]*100}_{split_sizes[1]*100}.csv")
+  df = pd.read_csv(f"{data_loc}/split_{int(split_sizes[0]*100)}_{int(split_sizes[1]*100)}.csv")
   if not partitions: partitions = list(df["partition"].unique())
 
   split = { p: df[df["partition"] == p] for p in partitions }
@@ -60,11 +60,11 @@ def save_split(
 ):
   for p in partitions: dfs[p]["partition"] = p
   split = pd.concat(dfs.values(), ignore_index=True)
-  split.to_csv(f"{save_loc}/split_{split_sizes[0]*100}_{split_sizes[1]*100}.csv", index=False)
+  split.to_csv(f"{save_loc}/split_{int(split_sizes[0]*100)}_{int(split_sizes[1]*100)}.csv", index=False)
 
 
 def check_split(data_loc : str, split_sizes : List[float]) -> bool:
-  return os.path.isfile(f"{data_loc}/split_{split_sizes[0]*100}_{split_sizes[1]*100}.csv")
+  return os.path.isfile(f"{data_loc}/split_{int(split_sizes[0]*100)}_{int(split_sizes[1]*100)}.csv")
 
 
 def log_split(split : Dict[str, pd.DataFrame]):
