@@ -31,13 +31,17 @@ torch.manual_seed(seed)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(seed)
 
-df_test = load_split(args.data_loc, ["test"])["test"]
-data_transforms = get_transforms(False, args.input_shape, args.norm_mean, args.norm_std) ["test"]
+_, model_filename = os.path.split(args.state_dict_loc) # Includes .pth
+model_filename = model_filename.split(".")[0] # Does not include .pth
+model_name = model_filename.split("_")[0]
+
+split = model_filename.split("_")[-2:]
+split = [float(i)/100 for i in split]
+
+df_test = load_split(args.data_loc, split, ["test"])["test"]
+data_transforms = get_transforms(False, args.input_shape, args.norm_mean, args.norm_std)["test"]
 dataset = PornographyFrameDataset(args.data_loc, df_test, data_transforms)
 dataloader = DataLoader(dataset, args.batch_size)
-
-_, model_filename = os.path.split(args.state_dict_loc) # Includes .pth
-model_name = model_filename.split("_")[0]
 
 print(f"Loading {model_name}...")
 
@@ -55,7 +59,7 @@ print("Model testing started...")
 if not os.path.exists(args.save_loc):
     os.makedirs(args.save_loc)
 
-results_save_loc = f"{args.save_loc}/{model_filename.split('.')[0]}"
+results_save_loc = f"{args.save_loc}/{model_filename}"
 
 test_model(model, dataloader, device, results_save_loc)
 

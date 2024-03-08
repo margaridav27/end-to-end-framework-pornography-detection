@@ -76,7 +76,7 @@ if not os.path.exists(args.model_save_loc):
 if not os.path.exists(args.metrics_save_loc):
     os.makedirs(args.metrics_save_loc)
 
-model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_optimized_{args.optimized}_aug_{args.data_aug}_split_{args.split[0]*100}{args.split[1]*100}"
+model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_optimized_{args.optimized}_aug_{args.data_aug}_split_{args.split[0]*100}_{args.split[1]*100}"
 torch.save(best_model.state_dict(), f"{args.model_save_loc}/{model_name}.pth")
 pd.DataFrame(metrics).to_csv(f"{args.metrics_save_loc}/{model_name}.csv", index=False)
 save_train_val_curves(f"{args.metrics_save_loc}/{model_name}.png", metrics)
