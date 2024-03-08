@@ -108,20 +108,21 @@ class EvenFrameExtractor(FrameExtractor):
         frame_i = 0
 
         while True:
+          # If we've extracted all the frames we need, or we're at the end of the video
+          if extracted_frames == real_n_frames or frame_i == frame_count - 1:
+            break
+
           ret, frame = video.read()
 
           # Advance to next frame
           if not ret or frame_i < ignore_frames: 
             frame_i += 1
             continue
-          
-          # Although it is already in the portion to be ignored, 
-          # it only stops if it has already extracted all the frames 
-          # or is at the end of the video
-          if frame_i >= frame_count - ignore_frames:
-            if extracted_frames == real_n_frames or frame_i == frame_count - 1:
-              break
 
+          # Even if we reach the portion of the video that was supposed to be ignored,
+          # we still continue to extract frames if we haven't extracted them all yet
+          # The loop breaks at the first condition if we've already extracted all frames
+   
           if frame_i % interval == 0:
             frame_name = f"{v.split('.')[0]}#{extracted_frames}.jpg"
             frame_label = 0 if "NonPorn" in v else 1
