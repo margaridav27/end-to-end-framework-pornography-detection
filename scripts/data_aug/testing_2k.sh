@@ -12,7 +12,7 @@ echo "Testing ResNet50"
 python -m src.model_testing \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --save_loc "results/data-aug/pornography-2k/results" \
-       --state_dict_loc "results/data-aug/pornography-2k/models/resnet50_freeze_False_epochs_50_batch_16_optim_sgd_optimized_False_aug_True.pth" \
+       --state_dict_loc "results/data-aug/pornography-2k/models/resnet50_freeze_False_epochs_50_batch_16_optim_sgd_optimized_False_aug_True_split_1515.pth" \
 
 # echo "Testing ResNet101"
 # python -m src.model_testing \

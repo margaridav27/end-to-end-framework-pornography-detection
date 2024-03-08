@@ -10,7 +10,7 @@ from albumentations.pytorch import ToTensorV2
 from torch.utils.data import DataLoader
 
 
-def split_data(df_frames : pd.DataFrame, split : list) -> Dict[str, pd.DataFrame]:
+def split_data(df_frames : pd.DataFrame, split : List[float]) -> Dict[str, pd.DataFrame]:
   df_frames["video"] = [frame_name.split("#")[0] for frame_name in df_frames["frame"]]
 
   agg = { "video": "first", "label": "first" }
@@ -37,8 +37,12 @@ def split_data(df_frames : pd.DataFrame, split : list) -> Dict[str, pd.DataFrame
   return split
 
 
-def load_split(data_loc : str, partitions : list=[]) -> Dict[str, pd.DataFrame]:
-  df = pd.read_csv(f"{data_loc}/split.csv")
+def load_split(
+    data_loc : str, 
+    split : List[float], 
+    partitions : List[str]=[]
+) -> Dict[str, pd.DataFrame]:
+  df = pd.read_csv(f"{data_loc}/split_{split[0]*100}_{split[1]*100}.csv")
   if not partitions: partitions = list(df["partition"].unique())
 
   split = { p: df[df["partition"] == p] for p in partitions }
@@ -48,14 +52,19 @@ def load_split(data_loc : str, partitions : list=[]) -> Dict[str, pd.DataFrame]:
   return split
 
 
-def save_split(save_loc : str, partitions : list, dfs : Dict[str, pd.DataFrame]):
+def save_split(
+    save_loc : str, 
+    split : List[float], 
+    partitions : List[str], 
+    dfs : Dict[str, pd.DataFrame]
+):
   for p in partitions: dfs[p]["partition"] = p
   split = pd.concat(dfs.values(), ignore_index=True)
-  split.to_csv(f"{save_loc}/split.csv", index=False)
+  split.to_csv(f"{save_loc}/split_{split[0]*100}_{split[1]*100}.csv", index=False)
 
 
-def check_split(data_loc : str) -> bool:
-  return os.path.isfile(f"{data_loc}/split.csv")
+def check_split(data_loc : str, split : List[float]) -> bool:
+  return os.path.isfile(f"{data_loc}/split_{split[0]*100}_{split[1]*100}.csv")
 
 
 def log_split(split : Dict[str, pd.DataFrame]):
@@ -107,11 +116,11 @@ def init_data(
   df_frames = pd.read_csv(f"{data_loc}/data.csv")
 
   partitions = ["train", "val", "test"]
-  if not check_split(data_loc):
+  if not check_split(data_loc, split):
     dfs = split_data(df_frames, split)
-    save_split(data_loc, partitions, dfs)
+    save_split(data_loc, split, partitions, dfs)
   else:
-    dfs = load_split(data_loc)
+    dfs = load_split(data_loc, split)
 
   datasets = { p: PornographyFrameDataset(data_loc, dfs[p], data_transforms.get(p)) for p in partitions }
   dataloaders = { p: DataLoader(datasets[p], batch_size) for p in partitions }
