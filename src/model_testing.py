@@ -36,7 +36,7 @@ data_transforms = get_transforms(False, args.input_shape, args.norm_mean, args.n
 dataset = PornographyFrameDataset(args.data_loc, df_test, data_transforms)
 dataloader = DataLoader(dataset, args.batch_size)
 
-model_filename, _ = os.path.split(args.state_dict_loc) # Includes .pth
+_, model_filename = os.path.split(args.state_dict_loc) # Includes .pth
 model_name = model_filename.split("_")[0]
 
 print(f"Loading {model_name}...")
