@@ -116,11 +116,11 @@ def init_data(
   df_frames = pd.read_csv(f"{data_loc}/data.csv")
 
   partitions = ["train", "val", "test"]
-  if not check_split(data_loc, split):
-    dfs = split_data(df_frames, split)
-    save_split(data_loc, split, partitions, dfs)
+  if not check_split(data_loc, split_sizes):
+    dfs = split_data(df_frames, split_sizes)
+    save_split(data_loc, split_sizes, partitions, dfs)
   else:
-    dfs = load_split(data_loc, split)
+    dfs = load_split(data_loc, split_sizes)
 
   datasets = { p: PornographyFrameDataset(data_loc, dfs[p], data_transforms.get(p)) for p in partitions }
   dataloaders = { p: DataLoader(datasets[p], batch_size) for p in partitions }
