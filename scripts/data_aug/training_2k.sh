@@ -15,6 +15,7 @@ python -m src.model_training \
        --metrics_save_loc "results/even-20/data-aug/pornography-2k/metrics" \
        --model_name "resnet50" \
        --epochs 50 \
+       --optimizer "adam" \
        --data_aug
         
 # echo "Training ResNet101"
