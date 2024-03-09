@@ -165,7 +165,7 @@ def run_epochs(
         with torch.set_grad_enabled(phase == "train"):
           outputs = model(inputs)
           loss = criterion(outputs, F.one_hot(labels, num_classes=2).float())
-          _, preds = torch.max(outputs, 1)
+          _, preds = torch.max(outputs, dim=1)
 
           # If in training phase, backward + optimize
           if phase == "train":
