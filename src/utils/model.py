@@ -264,8 +264,10 @@ def test_model(model, dataloader, device, save_loc):
       inputs = inputs.to(device)
       labels = labels.to(device)
 
-      outputs = model(inputs) # Forward pass
-      confidences, preds = torch.max(F.softmax(outputs, dim=1), dim=1)
+      # Forward pass
+      outputs = model(inputs)
+      # Applying sigmoid as it is a binary classification problem
+      confidences, preds = torch.max(torch.sigmoid(outputs), dim=1) 
       
       frame_names.extend(names)
       targets.extend(labels.cpu().numpy())
