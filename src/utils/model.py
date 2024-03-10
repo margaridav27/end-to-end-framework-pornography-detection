@@ -1,6 +1,7 @@
 from src.utils.misc import format_time
 from src.utils.evaluation import calculate_metrics, save_confusion_matrix
 
+import gc
 import time
 import pandas as pd
 
@@ -109,30 +110,36 @@ def init_model(
   return optimize_model(model) if optimized else model
 
 
-def run_epochs(
+def train_model(
     model, 
     dataloaders,
     dataset_sizes,
-    criterion, 
-    optimizer, 
-    scheduler,
-    n_epochs,
+    optim, 
+    n_epochs, 
     device
-): 
+):
   '''
-    General function to run n_epochs epochs
+    General function to train a model
   '''
-  
+
+  # This loss combines a Sigmoid layer and the BCELoss in one single class
+  criterion = nn.BCEWithLogitsLoss() 
+
+  params = list(filter(lambda p: p.requires_grad, model.parameters()))
+  lr, momentum = 0.001, 0.9
+  if optim == "adam": optimizer = torch.optim.Adam(params, lr)
+  else: optimizer = torch.optim.SGD(params, lr, momentum)
+
+  scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optim, step_size=7, gamma=0.1)
+
+  # Measure the total training time for the whole run
+  total_t0 = time.time()
+
   best_model = model.state_dict()
   best_acc = 0.0
   best_epoch = 1
 
-  metrics = { 
-    "train_loss": [], 
-    "train_acc": [], 
-    "val_loss": [],
-    "val_acc": []
-  }
+  metrics = { "train_loss": [], "train_acc": [], "val_loss": [], "val_acc": [] }
 
   for epoch_i in range(n_epochs):
     print('========== Start Epoch {} / {} =========='.format(epoch_i + 1, n_epochs))
@@ -180,12 +187,13 @@ def run_epochs(
         scheduler.step()
 
       epoch_loss = running_loss / dataset_sizes[phase]
+      metrics[f"{phase}_loss"].append(epoch_loss)
+
       epoch_acc = running_corrects.double() / dataset_sizes[phase]
+      metrics[f"{phase}_acc"].append(epoch_acc.item())
       
       print("{} Loss: {:.4f} | Acc: {:.4f}".format("Training" if phase == "train" else "Validation", epoch_loss, epoch_acc))
-      metrics[f"{phase}_loss"].append(epoch_loss)
-      metrics[f"{phase}_acc"].append(epoch_acc.item())
-
+      
       if phase == "val" and epoch_acc > best_acc:
         best_acc = epoch_acc
         best_epoch = epoch_i + 1
@@ -195,53 +203,23 @@ def run_epochs(
     print("Epoch took {}".format(format_time(time.time() - t0)))
     print('=========== End Epoch {} / {} ===========\n'.format(epoch_i + 1, n_epochs))
 
-  return best_model, best_acc, best_epoch, metrics
-  
-  
-def train_model(
-    model, 
-    dataloaders,
-    dataset_sizes,
-    optimizer, 
-    n_epochs, 
-    device
-):
-  '''
-    General function to train a model
-  '''
-
-  # This loss combines a Sigmoid layer and the BCELoss in one single class
-  criterion = nn.BCEWithLogitsLoss() 
-
-  params = list(filter(lambda p: p.requires_grad, model.parameters()))
-  lr, momentum = 0.001, 0.9
-  if optimizer == "adam": optim = torch.optim.Adam(params, lr)
-  else: optim = torch.optim.SGD(params, lr, momentum)
-
-  scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optim, step_size=7, gamma=0.1)
-
-  # Measure the total training time for the whole run
-  total_t0 = time.time()
-
-  best_model, best_acc, best_epoch, metrics = run_epochs(
-    model, 
-    dataloaders, 
-    dataset_sizes, 
-    criterion, 
-    optim, 
-    scheduler,
-    n_epochs, 
-    device
-  )
-
   print("Training complete!")
   print("Total training took {}".format(format_time(time.time() - total_t0)))
   print("Best Acc: {:.4f} (epoch {})\n".format(best_acc, best_epoch))
+
+  # Clear gradients
+  optimizer.zero_grad()
+
+  # Clear model, optimizer, criterion, and scheduler
+  del model
+  del optimizer
+  del criterion
+  del scheduler
   
-  # Load best model
-  model.load_state_dict(best_model)
-  
-  return model, metrics
+  # Run garbage collector
+  gc.collect()
+
+  return best_model, metrics
 
 
 def test_model(model, dataloader, device, save_loc):

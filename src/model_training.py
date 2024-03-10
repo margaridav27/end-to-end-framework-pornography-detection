@@ -59,7 +59,7 @@ model = model.to(device)
 
 print("Model training started...\n")
 
-best_model, metrics = train_model(
+best_model_state_dict, metrics = train_model(
     model,
     dataloaders,
     dataset_sizes,
@@ -77,7 +77,7 @@ if not os.path.exists(args.metrics_save_loc):
     os.makedirs(args.metrics_save_loc)
 
 model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_optimized_{args.optimized}_aug_{args.data_aug}_split_{int(args.split[0]*100)}_{int(args.split[1]*100)}"
-torch.save(best_model.state_dict(), f"{args.model_save_loc}/{model_name}.pth")
+torch.save(best_model_state_dict, f"{args.model_save_loc}/{model_name}.pth")
 pd.DataFrame(metrics).to_csv(f"{args.metrics_save_loc}/{model_name}.csv", index=False)
 save_train_val_curves(f"{args.metrics_save_loc}/{model_name}.png", metrics)
 
