@@ -130,7 +130,7 @@ def train_model(
   if optim == "adam": optimizer = torch.optim.Adam(params, lr)
   else: optimizer = torch.optim.SGD(params, lr, momentum)
 
-  scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optim, step_size=7, gamma=0.1)
+  scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=7, gamma=0.1)
 
   # Measure the total training time for the whole run
   total_t0 = time.time()
