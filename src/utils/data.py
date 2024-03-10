@@ -80,13 +80,13 @@ def get_transforms(
   ) -> Dict[str, A.Compose]:
   
   train_transforms = [
-    A.RandomCropFromBorders(crop_top=0.2, crop_bottom=0.2),
+    A.RandomCropFromBorders(),
     A.Resize(height=input_shape, width=input_shape),
-    A.HorizontalFlip(),
+    # A.HorizontalFlip(),
     A.RandomRotate90(),
     A.ColorJitter(),
     A.RandomGamma(),
-    A.RandomShadow(),
+    # A.RandomShadow(),
     A.Normalize(mean=norm_mean, std=norm_std),
     ToTensorV2()
   ]
