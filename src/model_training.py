@@ -21,7 +21,6 @@ parser.add_argument("--freeze_layers", action="store_true", default=False)
 parser.add_argument("--epochs", type=int, default=20)
 parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--optimizer", type=str, default="sgd")
-parser.add_argument("--optimized", action="store_true", default=False)
 parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
 parser.add_argument("--data_aug", action="store_true", default=False)
 parser.add_argument("--input_shape", type=int, default=224)
@@ -53,7 +52,7 @@ dataloaders, dataset_sizes = init_data(
 
 print(f"Loading {args.model_name}...")
 
-model = init_model(args.model_name, args.weights, args.freeze_layers, args.optimized)
+model = init_model(args.model_name, args.weights, args.freeze_layers)
 model = torch.nn.DataParallel(model)
 model = model.to(device)
 
@@ -76,7 +75,7 @@ if not os.path.exists(args.model_save_loc):
 if not os.path.exists(args.metrics_save_loc):
     os.makedirs(args.metrics_save_loc)
 
-model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_optimized_{args.optimized}_aug_{args.data_aug}_split_{int(args.split[0]*100)}_{int(args.split[1]*100)}"
+model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_aug_{args.data_aug}_split_{int(args.split[0]*100)}_{int(args.split[1]*100)}"
 torch.save(best_model_state_dict, f"{args.model_save_loc}/{model_name}.pth")
 pd.DataFrame(metrics).to_csv(f"{args.metrics_save_loc}/{model_name}.csv", index=False)
 save_train_val_curves(f"{args.metrics_save_loc}/{model_name}.png", metrics)

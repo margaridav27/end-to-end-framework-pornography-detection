@@ -11,41 +11,6 @@ import torch.nn.functional as F
 from torchvision import models
 
 
-def add_mixed_pooling_and_batch_norm(model, module):
-  if isinstance(module, nn.Conv2d):
-    # Add BatchNorm2d after each Conv2d 
-    # Only if Conv2d is not already followed by BatchNorm2d
-    conv_followed_by_bn = conv = False
-    for next in model.modules():
-      if conv and isinstance(next, nn.BatchNorm2d):
-        conv_followed_by_bn = True
-        break
-      if isinstance(next, nn.Conv2d):
-        conv = True
-    if conv_followed_by_bn:
-      return module
-    else:
-      return nn.Sequential(module, nn.BatchNorm2d(module.out_channels))
-  elif isinstance(module, nn.MaxPool2d):
-    # Replace MaxPool2d with MixedPooling
-    return nn.Sequential(
-      nn.MaxPool2d(kernel_size=module.kernel_size, stride=module.stride, padding=module.padding),
-      nn.AvgPool2d(kernel_size=module.kernel_size, stride=module.stride, padding=module.padding)
-    )
-  elif isinstance(module, nn.Sequential):
-    # Recursively go through Sequential modules
-    return nn.Sequential(*(add_mixed_pooling_and_batch_norm(model, m) for m in module))
-  else:
-    return module
-  
-
-def optimize_model(model):
-  # Apply changes recursively
-  for name, module in model.named_children():
-    setattr(model, name, add_mixed_pooling_and_batch_norm(model, module))
-  return model
-
-
 def get_pytorch_model(model_name : str, weights : str=None):
   if model_name == "resnet50": 
     return models.resnet50(weights=weights)
@@ -95,8 +60,7 @@ def modify_last_fcl(model, model_name):
 def init_model(
     model_name : str, 
     weights : str=None, 
-    freeze_layers : bool=True,
-    optimized : bool=False
+    freeze_layers : bool=True
 ): 
   model = get_pytorch_model(model_name, weights)
   
@@ -107,7 +71,7 @@ def init_model(
   # Parameters of newly constructed modules have requires_grad=True by default
   model = modify_last_fcl(model, model_name)
 
-  return optimize_model(model) if optimized else model
+  return model
 
 
 def train_model(
