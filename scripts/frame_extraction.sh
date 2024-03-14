@@ -9,15 +9,16 @@
 echo "Running frame extraction job"
 
 # Pornography-800
-# echo "Extracting frames from Pornography-800"
-# python -m src.frame_extraction.frame_extraction \
-#        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornEasy" \
-#                   "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornDifficulty" \
-#                   "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vPorn" \
-#        --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/middle-20" \
-#        --n_frames 20
+echo "Extracting frames from Pornography-800"
+python -m src.frame_extraction.frame_extraction \
+       --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornEasy" \
+                  "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vNonPornDifficulty" \
+                  "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data/Database/vPorn" \
+       --save_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/even-20" \
+       --n_frames 20 \
+       --strat "even"
 
-# Pornography-2k
+Pornography-2k
 echo "Extracting frames from Pornography-2k"
 python -m src.frame_extraction.frame_extraction \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data/original" \
