@@ -12,26 +12,77 @@ from torchvision import models
 
 
 def get_pytorch_model(model_name : str, weights : str=None):
-  if model_name == "resnet50": 
-    return models.resnet50(weights=weights)
+  
+  if model_name == "resnet50":
+    try:
+      return models.resnet50(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.resnet50(pretrained=True)
+  
   elif model_name == "resnet101": 
-    return models.resnet101(weights=weights)
-  elif model_name == "resnet152": 
-    return models.resnet152(weights=weights)
-  elif model_name == "densenet121": 
-    return models.densenet121(weights=weights)
-  elif model_name == "densenet169": 
-    return models.densenet169(weights=weights)
-  elif model_name == "densenet201": 
-    return models.densenet201(weights=weights)
+    try:
+      return models.resnet101(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.resnet101(pretrained=True)
+  
+  elif model_name == "resnet152":
+    try:
+      return models.resnet152(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.resnet152(pretrained=True)
+  
+  elif model_name == "densenet121":
+    try:
+      return models.densenet121(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.densenet121(pretrained=True)
+  
+  elif model_name == "densenet169":
+    try:
+      return models.densenet169(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.densenet169(pretrained=True)
+  
+  elif model_name == "densenet201":
+    try:
+      return models.densenet201(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.densenet201(pretrained=True)
+  
   elif model_name == "alexnet":
-    return models.alexnet(weights=weights)
-  elif model_name == "vgg16": 
-    return models.vgg16(weights=weights)
-  elif model_name == "vgg19": 
-    return models.vgg19(weights=weights)
+    try:
+      return models.alexnet(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.alexnet(pretrained=True)
+  
+  elif model_name == "vgg16":
+    try:
+      return models.vgg16(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.vgg16(pretrained=True)
+  
+  elif model_name == "vgg19":
+    try:
+      return models.vgg19(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.vgg19(pretrained=True)
+  
   elif model_name == "mobilenetv2":
-    return models.mobilenet_v2(weights=weights)
+    try:
+      return models.mobilenet_v2(weights=weights)
+    except:
+      if weights == "IMAGENET1K_V1":
+        return models.mobilenet_v2(pretrained=True)
+  
   else: 
     raise ValueError(f"Invalid model_name {model_name}")
 
