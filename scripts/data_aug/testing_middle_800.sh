@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min12GB               
-#SBATCH --qos=gpu_min12gb                 
+#SBATCH --partition=gpu_min8GB               
+#SBATCH --qos=gpu_min8GB_ext                 
 #SBATCH --job-name=testing_aug_800
 #SBATCH -o testing_aug_800.out               
 #SBATCH -e testing_aug_800.err
