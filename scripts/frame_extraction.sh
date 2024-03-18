@@ -18,7 +18,7 @@ python -m src.frame_extraction.frame_extraction \
        --n_frames 20 \
        --strat "even"
 
-Pornography-2k
+# Pornography-2k
 echo "Extracting frames from Pornography-2k"
 python -m src.frame_extraction.frame_extraction \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data/original" \
