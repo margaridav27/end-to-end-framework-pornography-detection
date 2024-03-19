@@ -43,6 +43,9 @@ print(f"Loading {model_name}...")
 if not os.path.exists(args.state_dict_loc):
     raise ValueError("Invalid --state_dict_loc argument.")
 
+if not os.path.exists(args.save_loc):
+    os.makedirs(args.save_loc)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device:", device)
 
