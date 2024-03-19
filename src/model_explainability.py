@@ -49,11 +49,11 @@ if not os.path.exists(args.save_loc):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device:", device)
 
-state_dict = torch.load(args.state_dict_loc)
+state_dict = torch.load(args.state_dict_loc, map_location=device)
 model = init_model(model_name)
 model = torch.nn.DataParallel(model)
 model.load_state_dict(state_dict)
-model = model.to(device)
+# model = model.to(device)
 model.eval()
 
 method = IntegratedGradients(model)
@@ -66,8 +66,8 @@ if args.to_explain:
         input = input.unsqueeze(0)
         input.requires_grad_()
 
-        input = input.to(device)
-        frame_label = frame_label.to(device)
+        # input = input.to(device)
+        # frame_label = frame_label.to(device)
 
         _, pred = predict(model, input)
 
@@ -89,8 +89,8 @@ else:
     for names, inputs, labels in dataloader:
         inputs.requires_grad_()
 
-        inputs = inputs.to(device)
-        labels = labels.to(device)
+        # inputs = inputs.to(device)
+        # labels = labels.to(device)
 
         _, pred = predict(model, inputs)
 
