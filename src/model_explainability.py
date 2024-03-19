@@ -71,7 +71,7 @@ if args.to_explain:
 
         _, pred = predict(model, input)
 
-        attr = method.attribute(inputs=input, target=pred)
+        attr = method.attribute(inputs=input, target=pred, n_steps=10)
         attributions[name] = attr
 
         viz.visualize_image_attr(
@@ -94,7 +94,7 @@ else:
 
         _, pred = predict(model, inputs)
 
-        attrs = method.attribute(inputs=inputs, target=labels)
+        attrs = method.attribute(inputs=inputs, target=labels, n_steps=10)
         for n, a in zip(names, attrs):
             attributions[n] = a
             viz.visualize_image_attr(
