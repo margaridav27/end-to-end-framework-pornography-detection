@@ -83,7 +83,7 @@ if args.to_explain:
             title="Integrated Gradients",
             use_pyplot=False
         )
-        plt.savefig(f"{args.save_loc}/{model_name}_{name}")
+        plt.savefig(f"{args.save_loc}/{model_filename}_{name}.png")
 else:
     dataloader = DataLoader(dataset, args.batch_size)
     for names, inputs, labels in dataloader:
@@ -106,5 +106,5 @@ else:
                 title="Integrated Gradients",
                 use_pyplot=False
             )
-            plt.savefig(f"{args.save_loc}/{model_name}_{n}")
+            plt.savefig(f"{args.save_loc}/{model_filename}_{n}.png")
 
