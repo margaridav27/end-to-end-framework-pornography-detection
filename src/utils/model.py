@@ -237,6 +237,16 @@ def train_model(
   return best_model, metrics
 
 
+def predict(model, input):
+  # Forward pass
+  outputs = model(input)
+
+  # Applying sigmoid as it is a binary classification problem
+  confidences, preds = torch.max(torch.sigmoid(outputs), dim=1) 
+
+  return confidences, preds
+
+
 def test_model(model, dataloader, device, save_loc):
   '''
     General function to test a model
@@ -257,11 +267,8 @@ def test_model(model, dataloader, device, save_loc):
       inputs = inputs.to(device)
       labels = labels.to(device)
 
-      # Forward pass
-      outputs = model(inputs)
-      # Applying sigmoid as it is a binary classification problem
-      confidences, preds = torch.max(torch.sigmoid(outputs), dim=1) 
-      
+      confidences, preds = predict(model, inputs)
+
       frame_names.extend(names)
       targets.extend(labels.cpu().numpy())
       predictions.extend(preds.cpu().numpy())
