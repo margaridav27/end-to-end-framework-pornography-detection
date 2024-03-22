@@ -36,7 +36,7 @@ echo "Testing DenseNet169"
 python -m src.model_testing \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20" \
        --save_loc "results/middle-20/data-aug/pornography-2k/results" \
-       --state_dict_loc "results/middle-20/data-aug/pornography-2k/models/densenet121_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth"
+       --state_dict_loc "results/middle-20/data-aug/pornography-2k/models/densenet169_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth"
 
 echo "Testing DenseNet201"
 python -m src.model_testing \
