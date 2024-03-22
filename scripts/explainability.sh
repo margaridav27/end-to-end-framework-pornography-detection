@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #SBATCH --partition=gpu_min24GB               
-#SBATCH --qos=gpu_min24GB _ext                 
+#SBATCH --qos=gpu_min24GB_ext                 
 #SBATCH --job-name=explainability
 #SBATCH -o explainability.out               
 #SBATCH -e explainability.err
