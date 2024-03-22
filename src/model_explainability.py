@@ -1,110 +1,111 @@
 from src.utils.data import load_split, get_transforms
-from src.utils.model import init_model, predict
-from src.utils.evaluation import save_train_val_curves
+from src.utils.model import init_model
+from src.utils.explainability import generate_explanations, ATTRIBUTION_METHODS, NOISE_TUNNEL_TYPES
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
+import json
 import argparse
-import matplotlib.pyplot as plt
+from typing import List
 
 import torch
-from torch.utils.data import DataLoader
+import torch.nn as nn
 
-from captum.attr import visualization as viz, IntegratedGradients
 
-parser = argparse.ArgumentParser(description="Training a pytorch model to classify pornographic content")
-parser.add_argument("--state_dict_loc", type=str, required=True)
-parser.add_argument("--data_loc", type=str, required=True)
-parser.add_argument("--save_loc", type=str, required=True)
-parser.add_argument("--explainer", type=str, required=True, help="Method to generate the explanation.")
-parser.add_argument("--to_explain", type=str, nargs="*", default=[], help="Frame names for which an explanation is desired. If no names are given, an explanation for each prediction will be generated.")
-parser.add_argument("--batch_size", type=int, default=16, help="If --to_explain is passed, this will not be taken into consideration.")
-parser.add_argument("--input_shape", type=int, default=224)
-parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
-parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
-args = parser.parse_args()
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Training a pytorch model to classify pornographic content")
+    parser.add_argument("--state_dict_loc", type=str, required=True)
+    parser.add_argument("--data_loc", type=str, required=True)
+    parser.add_argument("--save_loc", type=str, required=True)
+    parser.add_argument("--filter", type=str, default="correct", help="Filter for predictions to generate explanations. Options: 'all' (all predictions), 'correct' (only correct predictions), 'incorrect' (only incorrect predictions). Default is 'correct'.")
+    parser.add_argument("--batch_size", type=int, default=16, help="If --to_explain is passed, this will not be taken into consideration.")
+    parser.add_argument("--input_shape", type=int, default=224)
+    parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
+    parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
+    parser.add_argument("--to_explain", type=str, nargs="*", default=[], help="Frame names for which an explanation is desired. If no names are given, an explanation for each prediction will be generated.")
+    parser.add_argument("--method", type=str, required=True, help="Method to generate the explanation.")
+    parser.add_argument("--method_args", type=json.loads, help="Arguments required by the explanation method in JSON format.")
+    parser.add_argument("--noise_tunnel", action="store_true", default=False)
+    parser.add_argument("--noise_tunnel_type", type=str, default="SGSQ", help="NoiseTunnel smoothing type. Ignored if --noise_tunnel is False.")
+    parser.add_argument("--noise_tunnel_samples", type=int, default=10, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
+    
+    args = parser.parse_args()
 
-_, model_filename = os.path.split(args.state_dict_loc) # Includes .pth
-model_filename = model_filename.split(".")[0] # Does not include .pth
-model_name = model_filename.split("_")[0]
+    if args.method not in ATTRIBUTION_METHODS.keys():
+        parser.error("Invalid --method.")
+    if args.noise_tunnel and args.noise_tunnel_type not in NOISE_TUNNEL_TYPES.keys():
+        parser.error("Invalid --noise_tunnel_type.")
 
-split = model_filename.split("_")[-2:]
-split = [float(i)/100 for i in split]
+    return args
 
-print(f"Loading dataset...")
-if not os.path.exists(args.data_loc):
-    raise ValueError("Invalid --data_loc argument.")
 
-df_test = load_split(args.data_loc, split, ["test"])["test"]
-data_transforms = get_transforms(False, args.input_shape, args.norm_mean, args.norm_std)["test"]
-dataset = PornographyFrameDataset(args.data_loc, df_test, data_transforms)
+def load_dataset(
+    data_loc : str, 
+    split : List[float], 
+    input_shape : int, 
+    norm_mean : List[float], 
+    norm_std : List[float]
+) -> PornographyFrameDataset:
+    if not os.path.exists(data_loc):
+        raise ValueError("Invalid --data_loc argument.")
 
-print(f"Loading {model_name}...")
-if not os.path.exists(args.state_dict_loc):
-    raise ValueError("Invalid --state_dict_loc argument.")
+    print("Loading dataset...")
+    df_test = load_split(data_loc, split, ["test"])["test"]
+    data_transforms = get_transforms(False, input_shape, norm_mean, norm_std)["test"]
+    return PornographyFrameDataset(data_loc, df_test, data_transforms)
 
-if not os.path.exists(args.save_loc):
-    os.makedirs(args.save_loc)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Device:", device)
+def load_model(
+    state_dict_loc : str, 
+    model_name : str, 
+    device : str
+) -> nn.Module :
+    if not os.path.exists(state_dict_loc):
+        raise ValueError("Invalid --state_dict_loc argument.")
 
-state_dict = torch.load(args.state_dict_loc, map_location=device)
-model = init_model(model_name)
-model = torch.nn.DataParallel(model)
-model.load_state_dict(state_dict)
-# model = model.to(device)
-model.eval()
+    print(f"Loading {model_name}...")
+    state_dict = torch.load(state_dict_loc)
+    model = init_model(model_name)
+    model = torch.nn.DataParallel(model)
+    model.load_state_dict(state_dict)
+    model = model.to(device)
 
-method = IntegratedGradients(model)
+    return model
 
-attributions = {}
-if args.to_explain:
-    for frame_name in args.to_explain:
-        name, input, label = dataset[frame_name]
 
-        input = input.unsqueeze(0)
-        input.requires_grad_()
+def main():
+    args = parse_arguments()
 
-        # input = input.to(device)
-        # frame_label = frame_label.to(device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Device:", device)
 
-        _, pred = predict(model, input)
+    _, model_filename = os.path.split(args.state_dict_loc) # Includes .pth
+    model_filename = model_filename.split(".")[0] # Does not include .pth
+    model_name = model_filename.split("_")[0]
 
-        attr = method.attribute(inputs=input, target=pred, n_steps=10)
-        attributions[name] = attr
+    split = [float(i)/100 for i in model_filename.split("_")[-2:]]
 
-        viz.visualize_image_attr(
-            attr[0].cpu().permute(1,2,0).detach().numpy(),
-            input.squeeze().cpu().permute(1,2,0).detach().numpy(),
-            method="blended_heat_map",
-            sign="positive",
-            show_colorbar=True,
-            title="Integrated Gradients",
-            use_pyplot=False
-        )
-        plt.savefig(f"{args.save_loc}/{model_filename}_{name}.png")
-else:
-    dataloader = DataLoader(dataset, args.batch_size)
-    for names, inputs, labels in dataloader:
-        inputs.requires_grad_()
+    dataset = load_dataset(args.data_loc, split, args.input_shape, args.norm_mean, args.norm_std)
+    model = load_model(args.state_dict_loc, model_name, device)
+    model.eval()
 
-        # inputs = inputs.to(device)
-        # labels = labels.to(device)
+    generate_explanations(
+        save_loc=os.path.join(args.save_loc, model_filename),
+        model=model, 
+        filter=args.filter,
+        device=device,
+        dataset=dataset,
+        norm_mean=args.norm_mean,
+        norm_std=args.norm_std, 
+        method_key=args.method, 
+        method_args=args.method_args, 
+        to_explain=args.to_explain, 
+        batch_size=args.batch_size,
+        noise_tunnel=args.noise_tunnel, 
+        noise_tunnel_type=args.noise_tunnel_type, 
+        noise_tunnel_samples=args.noise_tunnel_samples
+    )
 
-        _, pred = predict(model, inputs)
 
-        attrs = method.attribute(inputs=inputs, target=labels, n_steps=10)
-        for n, a in zip(names, attrs):
-            attributions[n] = a
-            viz.visualize_image_attr(
-                a[0].cpu().permute(1,2,0).detach().numpy(),
-                input.squeeze().cpu().permute(1,2,0).detach().numpy(),
-                method="blended_heat_map",
-                sign="positive",
-                show_colorbar=True,
-                title="Integrated Gradients",
-                use_pyplot=False
-            )
-            plt.savefig(f"{args.save_loc}/{model_filename}_{n}.png")
-
+if __name__ == "__main__":
+    main()
