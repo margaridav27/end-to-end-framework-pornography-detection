@@ -65,7 +65,6 @@ def generate_explanations(
         for frame_name in to_explain:
             _, input, label = dataset[frame_name]
             input = input.to(device).unsqueeze(0).requires_grad_()
-            
             _, pred = predict(model, input)
 
             if not filter_mask or filter_mask(pred, label):
@@ -86,7 +85,6 @@ def generate_explanations(
         dataloader = DataLoader(dataset, batch_size)
         for names, inputs, labels in dataloader:
             inputs = inputs.to(device).requires_grad_()
-
             _, preds = predict(model, inputs)
 
             if filter_mask:
@@ -154,11 +152,12 @@ def visualize_explanation(
     prediction : int,
     sign : Optional[str] = "positive",
     vis_method : Optional[str] = "blended_heat_map",
+    colormap : Optional[str] = None,
     side_by_side : bool = False    
 ):
     attr = np.transpose(attr[0], (1,2,0))
-
     np_frame = frame.squeeze().cpu().permute(1,2,0).detach().numpy()
+
     if side_by_side:
         # Denormalize for better visualization
         np_frame = np.clip(norm_std * np_frame + norm_mean, 0, 1)
@@ -169,7 +168,7 @@ def visualize_explanation(
             methods=["original_image", vis_method],
             signs=["all", sign],
             show_colorbar=True,
-            cmap="jet",
+            cmap=colormap,
             titles=[f"{frame_name} (pred: {prediction})", ATTRIBUTION_METHODS[attr_method][1]]
         )[0]
     else:
@@ -179,6 +178,6 @@ def visualize_explanation(
             method=vis_method,
             sign=sign,
             show_colorbar=True,
-            cmap="jet",
+            cmap=colormap,
             title=f"{ATTRIBUTION_METHODS[attr_method][1]} - {frame_name} (pred: {prediction})"
         )[0]
