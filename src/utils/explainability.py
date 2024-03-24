@@ -3,7 +3,7 @@ from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import numpy as np
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 
 import torch
 import torch.nn as nn
@@ -38,20 +38,22 @@ def generate_explanations(
     norm_mean : List[float],
     norm_std : List[float],
     method_key : str, 
-    method_args : Optional[Dict[str, Any]] = None, 
+    method_kwargs : Optional[Dict[str, Any]] = None, 
+    attribute_kwargs : Optional[Dict[str, Any]] = None, 
     to_explain : Optional[List[str]] = None, 
     batch_size : Optional[int] = 16, 
     noise_tunnel : Optional[bool] = False, 
     noise_tunnel_type : Optional[str] = "SGSQ", 
     noise_tunnel_samples : Optional[int] = 10
 ):
-    if not method_args: method_args = {}
+    if not method_kwargs: method_kwargs = {}
+    if not attribute_kwargs: attribute_kwargs = {}
     
-    method = ATTRIBUTION_METHODS[method_key][0](model)
+    method = ATTRIBUTION_METHODS[method_key][0](model, **method_kwargs)
     if noise_tunnel:
         method = NoiseTunnel(method)
-        method_args["nt_type"] = NOISE_TUNNEL_TYPES[noise_tunnel_type]
-        method_args["nt_samples"] = noise_tunnel_samples
+        attribute_kwargs["nt_type"] = NOISE_TUNNEL_TYPES[noise_tunnel_type]
+        attribute_kwargs["nt_samples"] = noise_tunnel_samples
 
     # Define filter mask based on filter
     filter_mask = None
@@ -65,11 +67,12 @@ def generate_explanations(
         for frame_name in to_explain:
             _, input, label = dataset[frame_name]
             input = input.to(device).unsqueeze(0).requires_grad_()
+            label = label.to(device)
             _, pred = predict(model, input)
 
             if not filter_mask or filter_mask(pred, label):
                 print(f"Generating explanations using {ATTRIBUTION_METHODS[method_key][1]} for {frame_name}...")
-                attr = method.attribute(inputs=input, target=pred, **method_args)
+                attr = method.attribute(inputs=input, target=pred, **attribute_kwargs)
                 save_explanation(
                     save_loc=save_loc, 
                     frame=input, 
@@ -85,6 +88,7 @@ def generate_explanations(
         dataloader = DataLoader(dataset, batch_size)
         for names, inputs, labels in dataloader:
             inputs = inputs.to(device).requires_grad_()
+            labels = labels.to(device)
             _, preds = predict(model, inputs)
 
             if filter_mask:
@@ -94,7 +98,7 @@ def generate_explanations(
             if len(inputs) == 0: return 
 
             print(f"Generating explanations using {ATTRIBUTION_METHODS[method_key][1]} for batch...")
-            attrs = method.attribute(inputs=inputs, target=preds, **method_args)
+            attrs = method.attribute(inputs=inputs, target=preds, **attribute_kwargs)
             for name, input, pred, attr in zip(names, inputs, preds, attrs):
                 save_explanation(
                     save_loc=save_loc, 
@@ -137,7 +141,8 @@ def save_explanation(
         attr=attribution_np,
         attr_method=attr_method,
         prediction=prediction,
-        side_by_side=True
+        side_by_side=True,
+        colormap="jet"
     )
     fig.savefig(f"{pngs_save_loc}/{frame_name}_pred_{prediction}.png")
 
@@ -147,15 +152,20 @@ def visualize_explanation(
     frame_name : str,
     norm_mean : List[float],
     norm_std : List[float],
-    attr : np.ndarray,
+    attr : Union[np.ndarray, str],
     attr_method : str,
     prediction : int,
     sign : Optional[str] = "positive",
     vis_method : Optional[str] = "blended_heat_map",
+    side_by_side : Optional[bool] = False,
     colormap : Optional[str] = None,
-    side_by_side : bool = False    
+    outlier_perc : Optional[Union[float, int]] = 2,
+    alpha_overlay : Optional[float] = 0.5 
 ):
-    attr = np.transpose(attr[0], (1,2,0))
+    base_attr_method = attr_method.split("_")[0]
+    noise_tunnel = True if len(attr_method.split("_")) > 1 else False
+
+    attr = np.transpose(np.load(attr) if isinstance(attr, str) else attr, (1,2,0))
     np_frame = frame.squeeze().cpu().permute(1,2,0).detach().numpy()
 
     if side_by_side:
@@ -169,7 +179,9 @@ def visualize_explanation(
             signs=["all", sign],
             show_colorbar=True,
             cmap=colormap,
-            titles=[f"{frame_name} (pred: {prediction})", ATTRIBUTION_METHODS[attr_method][1]]
+            outlier_perc=outlier_perc,
+            alpha_overlay=alpha_overlay,
+            titles=[f"{frame_name} (pred: {prediction})", f"{ATTRIBUTION_METHODS[base_attr_method][1]}{' with Noise Tunnel' if noise_tunnel else ''}"]
         )[0]
     else:
         return viz.visualize_image_attr(
@@ -179,5 +191,7 @@ def visualize_explanation(
             sign=sign,
             show_colorbar=True,
             cmap=colormap,
-            title=f"{ATTRIBUTION_METHODS[attr_method][1]} - {frame_name} (pred: {prediction})"
+            outlier_perc=outlier_perc,
+            alpha_overlay=alpha_overlay,
+            title=f"{ATTRIBUTION_METHODS[base_attr_method][1]}{' with Noise Tunnel' if noise_tunnel else ''} - {frame_name} (pred: {prediction})"
         )[0]

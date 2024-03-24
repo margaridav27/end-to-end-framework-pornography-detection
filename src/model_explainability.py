@@ -24,7 +24,8 @@ def parse_arguments():
     parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
     parser.add_argument("--to_explain", type=str, nargs="*", default=[], help="Frame names for which an explanation is desired. If no names are given, an explanation for each prediction will be generated.")
     parser.add_argument("--method", type=str, required=True, help="Method to generate the explanation.")
-    parser.add_argument("--method_args", type=json.loads, help="Arguments required by the explanation method in JSON format.")
+    parser.add_argument("--method_kwargs", type=json.loads, help="JSON string representing keyword arguments for initializing the attribution method.")
+    parser.add_argument("--attribute_kwargs", type=json.loads, help="JSON string representing keyword arguments for calling the attribute method.")
     parser.add_argument("--noise_tunnel", action="store_true", default=False)
     parser.add_argument("--noise_tunnel_type", type=str, default="SGSQ", help="NoiseTunnel smoothing type. Ignored if --noise_tunnel is False.")
     parser.add_argument("--noise_tunnel_samples", type=int, default=10, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
@@ -98,7 +99,8 @@ def main():
         norm_mean=args.norm_mean,
         norm_std=args.norm_std, 
         method_key=args.method, 
-        method_args=args.method_args, 
+        method_kwargs=args.method_kwargs, 
+        attribute_kwargs=args.attribute_kwargs,
         to_explain=args.to_explain, 
         batch_size=args.batch_size,
         noise_tunnel=args.noise_tunnel, 
