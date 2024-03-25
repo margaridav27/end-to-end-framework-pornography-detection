@@ -4,7 +4,7 @@ from src.utils.explainability import generate_explanations, ATTRIBUTION_METHODS,
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
-import json
+import ast
 import argparse
 from typing import List
 
@@ -24,8 +24,8 @@ def parse_arguments():
     parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
     parser.add_argument("--to_explain", type=str, nargs="*", default=[], help="Frame names for which an explanation is desired. If no names are given, an explanation for each prediction will be generated.")
     parser.add_argument("--method", type=str, required=True, help="Method to generate the explanation.")
-    parser.add_argument("--method_kwargs", type=json.loads, help="JSON string representing keyword arguments for initializing the attribution method.")
-    parser.add_argument("--attribute_kwargs", type=json.loads, help="JSON string representing keyword arguments for calling the attribute method.")
+    parser.add_argument("--method_kwargs", type=str, help="JSON string representing keyword arguments for initializing the attribution method.")
+    parser.add_argument("--attribute_kwargs", type=str, help="JSON string representing keyword arguments for calling the attribute method.")
     parser.add_argument("--noise_tunnel", action="store_true", default=False)
     parser.add_argument("--noise_tunnel_type", type=str, default="SGSQ", help="NoiseTunnel smoothing type. Ignored if --noise_tunnel is False.")
     parser.add_argument("--noise_tunnel_samples", type=int, default=10, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
@@ -34,8 +34,21 @@ def parse_arguments():
 
     if args.method not in ATTRIBUTION_METHODS.keys():
         parser.error("Invalid --method.")
+        
     if args.noise_tunnel and args.noise_tunnel_type not in NOISE_TUNNEL_TYPES.keys():
         parser.error("Invalid --noise_tunnel_type.")
+
+    if args.method_kwargs:
+        try:
+            args.method_kwargs = ast.literal_eval(args.method_kwargs)
+        except (SyntaxError, ValueError):
+            parser.error("Invalid --method_kwargs.")
+
+    if args.attribute_kwargs:
+        try:
+            args.attribute_kwargs = ast.literal_eval(args.attribute_kwargs)
+        except (SyntaxError, ValueError):
+            parser.error("Invalid --attribute_kwargs.")
 
     return args
 

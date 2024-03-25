@@ -3,13 +3,23 @@ from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 from typing import Dict, List, Optional, Any, Union
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from captum.attr import visualization as viz, IntegratedGradients, DeepLift, LRP, NoiseTunnel
+from captum.attr import (
+  visualization as viz, 
+  IntegratedGradients, 
+  DeepLift, 
+  LRP,
+  Deconvolution, 
+  Occlusion, 
+  NoiseTunnel,
+)
+from captum.attr._utils.lrp_rules import EpsilonRule, GammaRule
 
 
 NOISE_TUNNEL_TYPES = { 
@@ -20,13 +30,30 @@ NOISE_TUNNEL_TYPES = {
 
 ATTRIBUTION_METHODS = {
     "IG": (IntegratedGradients, "Integrated Gradients"),
-    "DEEP_LIFT": (DeepLift, "Deep Lift"),
-    "LRP": (LRP, "LRP")
+    "DEEP-LIFT": (DeepLift, "Deep Lift"),
+    "LRP": (LRP, "LRP"),
+    "LRP-CMP": (LRP, "LRP (composite strategy)"),
+    "DECONV": (Deconvolution, "Deconvolution"),
+    "OCC": (Occlusion, "Occlusion")
 }
 
 VISUALIZATION_TYPES = { "heat_map", "blended_heat_map", "masked_image", "alpha_scaling" } 
 
 SIGN_TYPES = { "all", "positive", "negative", "absolute_value" }
+
+
+def set_lrp_rules(model : nn.Module):
+    # NOTE: only works with vgg19
+    layers = list(model.module.features) + list(model.module.classifier)
+    num_layers = len(layers)
+
+    for idx_layer in range(1, num_layers):
+        if idx_layer <= 20:
+            setattr(layers[idx_layer], "rule", GammaRule())
+        elif 21 <= idx_layer <= 36:
+            setattr(layers[idx_layer], "rule", EpsilonRule(epsilon=0.25))
+        elif idx_layer >= 37:
+            setattr(layers[idx_layer], "rule", EpsilonRule(epsilon=0))
 
 
 def generate_explanations(
@@ -48,7 +75,7 @@ def generate_explanations(
 ):
     if not method_kwargs: method_kwargs = {}
     if not attribute_kwargs: attribute_kwargs = {}
-    
+                
     method = ATTRIBUTION_METHODS[method_key][0](model, **method_kwargs)
     if noise_tunnel:
         method = NoiseTunnel(method)
@@ -67,11 +94,12 @@ def generate_explanations(
         for frame_name in to_explain:
             _, input, label = dataset[frame_name]
             input = input.to(device).unsqueeze(0).requires_grad_()
-            label = label.to(device)
+            label = torch.tensor(label).to(device)
             _, pred = predict(model, input)
 
             if not filter_mask or filter_mask(pred, label):
                 print(f"Generating explanations using {ATTRIBUTION_METHODS[method_key][1]} for {frame_name}...")
+                if method_key == "LRP-CMP": set_lrp_rules(model)
                 attr = method.attribute(inputs=input, target=pred, **attribute_kwargs)
                 save_explanation(
                     save_loc=save_loc, 
@@ -79,7 +107,7 @@ def generate_explanations(
                     frame_name=frame_name, 
                     norm_mean=norm_mean,
                     norm_std=norm_std,
-                    attr=attr, 
+                    attr=attr[0], 
                     attr_method=method_key if not noise_tunnel else f"{method_key}_NT_{noise_tunnel_type}_{noise_tunnel_samples}", 
                     prediction=pred.item()
                 )
@@ -98,6 +126,7 @@ def generate_explanations(
             if len(inputs) == 0: return 
 
             print(f"Generating explanations using {ATTRIBUTION_METHODS[method_key][1]} for batch...")
+            if method_key == "LRP-CMP": set_lrp_rules(model)
             attrs = method.attribute(inputs=inputs, target=preds, **attribute_kwargs)
             for name, input, pred, attr in zip(names, inputs, preds, attrs):
                 save_explanation(
@@ -145,6 +174,7 @@ def save_explanation(
         colormap="jet"
     )
     fig.savefig(f"{pngs_save_loc}/{frame_name}_pred_{prediction}.png")
+    plt.close(fig)
 
 
 def visualize_explanation(
@@ -165,7 +195,16 @@ def visualize_explanation(
     base_attr_method = attr_method.split("_")[0]
     noise_tunnel = True if len(attr_method.split("_")) > 1 else False
 
-    attr = np.transpose(np.load(attr) if isinstance(attr, str) else attr, (1,2,0))
+    title_original_image = f"{frame_name} (pred: {prediction})"
+    title_method = f"{ATTRIBUTION_METHODS[base_attr_method][1]}"
+    if noise_tunnel:
+        noise_tunnel_type = NOISE_TUNNEL_TYPES[attr_method.split("_")[-2]]
+        noise_tunnel_samples = attr_method.split("_")[-1]
+        title_method += f" with Noise Tunnel ({noise_tunnel_type}, {noise_tunnel_samples} samples)"
+
+    if isinstance(attr, str): attr = np.load(attr)
+    if len(attr.shape) == 4: attr = attr[0]
+    attr = np.transpose(attr, (1,2,0))
     np_frame = frame.squeeze().cpu().permute(1,2,0).detach().numpy()
 
     if side_by_side:
@@ -181,7 +220,7 @@ def visualize_explanation(
             cmap=colormap,
             outlier_perc=outlier_perc,
             alpha_overlay=alpha_overlay,
-            titles=[f"{frame_name} (pred: {prediction})", f"{ATTRIBUTION_METHODS[base_attr_method][1]}{' with Noise Tunnel' if noise_tunnel else ''}"]
+            titles=[title_original_image, title_method]
         )[0]
     else:
         return viz.visualize_image_attr(
@@ -193,5 +232,5 @@ def visualize_explanation(
             cmap=colormap,
             outlier_perc=outlier_perc,
             alpha_overlay=alpha_overlay,
-            title=f"{ATTRIBUTION_METHODS[base_attr_method][1]}{' with Noise Tunnel' if noise_tunnel else ''} - {frame_name} (pred: {prediction})"
+            title=f"{title_original_image} - {title_method}"
         )[0]
