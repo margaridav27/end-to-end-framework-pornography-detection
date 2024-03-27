@@ -24,13 +24,13 @@ python -m src.model_explainability \
                     "vPorn000458#0.jpg" \
                     "vPorn000083#0.jpg" \
                     "vPorn000060#0.jpg" \
-                    "NonPorn000120#0.jpg" \
-                    "NonPorn000973#0.jpg" \
-                    "NonPorn000183#0.jpg" \
-                    "NonPorn000448#0.jpg" \
-                    "NonPorn000625#0.jpg" \
-                    "NonPorn000216#0.jpg" \
-                    "NonPorn000648#0.jpg" \
-                    "NonPorn000254#0.jpg" \
-                    "NonPorn000942#0.jpg" \
-                    "NonPorn000859#0.jpg"
+                    "vNonPorn000120#0.jpg" \
+                    "vNonPorn000973#0.jpg" \
+                    "vNonPorn000183#0.jpg" \
+                    "vNonPorn000448#0.jpg" \
+                    "vNonPorn000625#0.jpg" \
+                    "vNonPorn000216#0.jpg" \
+                    "vNonPorn000648#0.jpg" \
+                    "vNonPorn000254#0.jpg" \
+                    "vNonPorn000942#0.jpg" \
+                    "vNonPorn000859#0.jpg"
