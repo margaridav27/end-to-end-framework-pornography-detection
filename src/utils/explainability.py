@@ -120,10 +120,11 @@ def generate_explanations(
             _, preds = predict(model, inputs)
 
             if filter_mask:
-                inputs = inputs[filter_mask(preds, labels)]
-                preds = preds[filter_mask(preds, labels)]
+                mask = filter_mask(preds, labels)
+                names = [name for name, m in zip(names, mask) if m]
+                inputs, preds = inputs[mask], preds[mask]
             
-            if len(inputs) == 0: return 
+            if len(inputs) == 0: continue 
 
             print(f"Generating explanations using {ATTRIBUTION_METHODS[method_key][1]} for batch...")
             if method_key == "LRP-CMP": set_lrp_rules(model)
