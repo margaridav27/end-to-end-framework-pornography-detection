@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 
 
-def parse_arguments():
+def _parse_arguments():
     parser = argparse.ArgumentParser(description="Training a pytorch model to classify pornographic content")
     parser.add_argument("--state_dict_loc", type=str, required=True)
     parser.add_argument("--data_loc", type=str, required=True)
@@ -53,7 +53,7 @@ def parse_arguments():
     return args
 
 
-def load_dataset(
+def _load_dataset(
     data_loc : str, 
     split : List[float], 
     input_shape : int, 
@@ -69,7 +69,7 @@ def load_dataset(
     return PornographyFrameDataset(data_loc, df_test, data_transforms)
 
 
-def load_model(
+def _load_model(
     state_dict_loc : str, 
     model_name : str, 
     device : str
@@ -88,7 +88,7 @@ def load_model(
 
 
 def main():
-    args = parse_arguments()
+    args = _parse_arguments()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
@@ -99,12 +99,12 @@ def main():
 
     split = [float(i)/100 for i in model_filename.split("_")[-2:]]
 
-    dataset = load_dataset(args.data_loc, split, args.input_shape, args.norm_mean, args.norm_std)
-    model = load_model(args.state_dict_loc, model_name, device)
+    dataset = _load_dataset(args.data_loc, split, args.input_shape, args.norm_mean, args.norm_std)
+    model = _load_model(args.state_dict_loc, model_name, device)
     model.eval()
 
     generate_explanations(
-        save_loc=os.path.join(args.save_loc, model_filename),
+        save_loc=os.path.join(args.save_loc, model_filename, args.filter),
         model=model, 
         filter=args.filter,
         device=device,
