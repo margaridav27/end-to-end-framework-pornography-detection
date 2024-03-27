@@ -13,7 +13,7 @@ python -m src.model_explainability \
        --filter "all" \
        --partition "train" \
        --batch_size 4 \
-       --method "LRP-CMP" \
+       --method "OCC" \
        --to_explain "vPorn000890#0.jpg" \
                     "vPorn000354#0.jpg" \
                     "vPorn000518#0.jpg" \
