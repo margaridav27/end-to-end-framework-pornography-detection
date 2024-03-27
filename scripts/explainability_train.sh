@@ -14,6 +14,7 @@ python -m src.model_explainability \
        --partition "train" \
        --batch_size 4 \
        --method "OCC" \
+       --attribute_kwargs '{ "sliding_window_shapes": (3,8,8), "strides": (3,4,4) }' \
        --to_explain "vPorn000890#0.jpg" \
                     "vPorn000354#0.jpg" \
                     "vPorn000518#0.jpg" \
