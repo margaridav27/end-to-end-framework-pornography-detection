@@ -18,6 +18,7 @@ def _parse_arguments():
     parser.add_argument("--data_loc", type=str, required=True)
     parser.add_argument("--save_loc", type=str, required=True)
     parser.add_argument("--filter", type=str, default="correct", help="Filter for predictions to generate explanations. Options: 'all' (all predictions), 'correct' (only correct predictions), 'incorrect' (only incorrect predictions). Default is 'correct'.")
+    parser.add_argument("--partition", type=str, default="test")
     parser.add_argument("--batch_size", type=int, default=16, help="If --to_explain is passed, this will not be taken into consideration.")
     parser.add_argument("--input_shape", type=int, default=224)
     parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
@@ -56,6 +57,7 @@ def _parse_arguments():
 def _load_dataset(
     data_loc : str, 
     split : List[float], 
+    partition : str,
     input_shape : int, 
     norm_mean : List[float], 
     norm_std : List[float]
@@ -64,8 +66,8 @@ def _load_dataset(
         raise ValueError("Invalid --data_loc argument.")
 
     print("Loading dataset...")
-    df_test = load_split(data_loc, split, ["test"])["test"]
-    data_transforms = get_transforms(False, input_shape, norm_mean, norm_std)["test"]
+    df_test = load_split(data_loc, split, [partition])[partition]
+    data_transforms = get_transforms(False, input_shape, norm_mean, norm_std)[partition]
     return PornographyFrameDataset(data_loc, df_test, data_transforms)
 
 
@@ -99,7 +101,7 @@ def main():
 
     split = [float(i)/100 for i in model_filename.split("_")[-2:]]
 
-    dataset = _load_dataset(args.data_loc, split, args.input_shape, args.norm_mean, args.norm_std)
+    dataset = _load_dataset(args.data_loc, split, args.partition, args.input_shape, args.norm_mean, args.norm_std)
     model = _load_model(args.state_dict_loc, model_name, device)
     model.eval()
 
