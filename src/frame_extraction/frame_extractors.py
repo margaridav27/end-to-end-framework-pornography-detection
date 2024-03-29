@@ -1,4 +1,5 @@
 import os
+import math
 import cv2 as cv
 import pandas as pd
 
@@ -92,50 +93,61 @@ class EvenFrameExtractor(FrameExtractor):
         if v.startswith("."): continue
 
         video_path = os.path.join(loc, v)
-        video = self._open_video(video_path)
-        
-        frame_count = self._get_frame_count(video)
-        real_n_frames = self.n_frames
-  
-        if self.n_frames > frame_count:
-          real_n_frames = frame_count
-          print(f"Number of frames {self.n_frames} exceeds {frame_count}. "
-                f"Extracting {frame_count} frames instead")
 
-        ignore_frames = frame_count * (1. - self.perc) # Number of frames to be ignored
-        interval = (frame_count - 2 * ignore_frames) // real_n_frames # Interval at which frames are to be extracted
-        extracted_frames = 0
-        frame_i = 0
+        max_attempts = 15
+        extracted_frames = {}
 
-        while True:
-          # If we've extracted all the frames we need, or we're at the end of the video
-          if extracted_frames == real_n_frames or frame_i == frame_count - 1:
-            break
-
-          ret, frame = video.read()
-
-          # Advance to next frame
-          if not ret or frame_i < ignore_frames: 
-            frame_i += 1
-            continue
-
-          # Even if we reach the portion of the video that was supposed to be ignored,
-          # we still continue to extract frames if we haven't extracted them all yet
-          # The loop breaks at the first condition if we've already extracted all frames
-   
-          if frame_i % interval == 0:
-            frame_name = f"{v.split('.')[0]}#{extracted_frames}.jpg"
-            frame_label = 0 if "NonPorn" in v else 1
-
-            data["frame"].append(frame_name)
-            data["label"].append(frame_label)
-
-            cv.imwrite(f"{self.save_loc}/{frame_name}", frame)
-
-            extracted_frames += 1
+        for _ in range(max_attempts):
+          video = self._open_video(video_path)
           
-          frame_i += 1
+          frame_count = self._get_frame_count(video)
+          real_n_frames = self.n_frames
+          ignore_frames = math.floor(frame_count * self.perc) # Number of frames to be ignored at the beginning and at the end
 
-        self._close_video(video)
+          if self.n_frames > frame_count:
+            real_n_frames = frame_count
+            ignore_frames = 0 # In this case, simply extract all the frames
+            print(f"Number of frames {self.n_frames} exceeds {frame_count}. "
+                  f"Extracting {frame_count} frames instead")
+            
+          while frame_count - 2 * ignore_frames < real_n_frames and ignore_frames > 0:
+            ignore_frames //= 2
+
+          interval = max((frame_count - 2 * ignore_frames) // real_n_frames, 1) # Interval at which frames are to be extracted
+      
+          frame_i = 0
+
+          while True:
+            # If we've extracted all the frames we need, or we're at the end of the video
+            if len(extracted_frames) == real_n_frames or frame_i == frame_count - 1:
+              break
+
+            ret, frame = video.read()
+
+            # Advance to next frame
+            if not ret or frame_i < ignore_frames: 
+              frame_i += 1
+              continue
+
+            # Even if we reach the portion of the video that was supposed to be ignored,
+            # we still continue to extract frames if we haven't extracted them all yet
+            # The loop breaks at the first condition if we've already extracted all frames
     
+            if frame_i % interval == 0:
+              frame_name = f"{v.split('.')[0]}#{len(extracted_frames)}.jpg"
+              frame_label = 0 if "NonPorn" in v else 1
+
+              extracted_frames[frame_name] = frame_label
+              
+              cv.imwrite(f"{self.save_loc}/{frame_name}", frame)
+            
+            frame_i += 1
+
+          self._close_video(video)
+
+          if len(extracted_frames) == real_n_frames: break
+
+        data["frame"].extend(extracted_frames.keys())
+        data["label"].extend(extracted_frames.values())
+
     pd.DataFrame(data).to_csv(f"{self.save_loc}/data.csv", index=False)

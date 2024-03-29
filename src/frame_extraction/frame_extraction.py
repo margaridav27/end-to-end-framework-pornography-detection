@@ -9,7 +9,7 @@ parser.add_argument("--data_loc", required=True, nargs="*", type=str, help="Path
 parser.add_argument("--save_loc", required=True, type=str, help="Path of the folder where the extracted frames are to be saved")
 parser.add_argument("--n_frames", required=True, type=int, help="Number of frames to extract from each video")
 parser.add_argument("--strat", type=str, default="middle", help="Strategy to use in the extraction (either middle or even)")
-parser.add_argument("--perc", type=float, default=0.8, help="Percentage of video to extract frames from (only if strat=even)")
+parser.add_argument("--perc", type=float, default=0.2, help="Percentage of video to ignore at the beginning and at the end (only if strat=even)")
 
 args = parser.parse_args()
 
