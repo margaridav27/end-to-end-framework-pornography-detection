@@ -94,6 +94,6 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/even-20" \
        --model_save_loc "results/even-20/data-aug/pornography-800/models" \
        --metrics_save_loc "results/even-20/data-aug/pornography-800/metrics" \
-       --model_name "mobilenetv2" \
+       --model_name "mobilenet_v2" \
        --epochs 50 \
        --data_aug

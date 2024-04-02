@@ -85,5 +85,5 @@ python -m src.model_training \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/middle-20" \
        --model_save_loc "results/middle-20/no-freeze/pornography-800/models" \
        --metrics_save_loc "results/middle-20/no-freeze/pornography-800/metrics" \
-       --model_name "mobilenetv2" \
+       --model_name "mobilenet_v2" \
        --epochs 50

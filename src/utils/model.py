@@ -11,81 +11,18 @@ import torch.nn.functional as F
 from torchvision import models
 
 
-def get_pytorch_model(model_name : str, weights : str=None):
-  
-  if model_name == "resnet50":
-    try:
-      return models.resnet50(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.resnet50(pretrained=True)
-  
-  elif model_name == "resnet101": 
-    try:
-      return models.resnet101(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.resnet101(pretrained=True)
-  
-  elif model_name == "resnet152":
-    try:
-      return models.resnet152(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.resnet152(pretrained=True)
-  
-  elif model_name == "densenet121":
-    try:
-      return models.densenet121(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.densenet121(pretrained=True)
-  
-  elif model_name == "densenet169":
-    try:
-      return models.densenet169(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.densenet169(pretrained=True)
-  
-  elif model_name == "densenet201":
-    try:
-      return models.densenet201(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.densenet201(pretrained=True)
-  
-  elif model_name == "alexnet":
-    try:
-      return models.alexnet(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.alexnet(pretrained=True)
-  
-  elif model_name == "vgg16":
-    try:
-      return models.vgg16(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.vgg16(pretrained=True)
-  
-  elif model_name == "vgg19":
-    try:
-      return models.vgg19(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.vgg19(pretrained=True)
-  
-  elif model_name == "mobilenetv2":
-    try:
-      return models.mobilenet_v2(weights=weights)
-    except:
-      if weights == "IMAGENET1K_V1":
-        return models.mobilenet_v2(pretrained=True)
-  
-  else: 
+def get_pytorch_model(model_name: str, weights: str = None):
+  model_constructor = getattr(models, model_name, None)
+
+  if model_constructor is None:
     raise ValueError(f"Invalid model_name {model_name}")
 
+  try:
+    return model_constructor(weights=weights)
+  except:
+    if weights == "IMAGENET1K_V1":
+        return model_constructor(pretrained=True)
+  
 
 def modify_last_fcl(model, model_name):
   if model_name.startswith("densenet"):
@@ -175,7 +112,7 @@ def train_model(
       running_corrects = 0
 
       # Iterate over data
-      for _, inputs, labels in dataloaders[phase]:
+      for names, inputs, labels in dataloaders[phase]:
         inputs = inputs.to(device)
         labels = labels.to(device)
 
@@ -208,12 +145,16 @@ def train_model(
       metrics[f"{phase}_acc"].append(epoch_acc.item())
       
       print("{} Loss: {:.4f} | Acc: {:.4f}".format("Training" if phase == "train" else "Validation", epoch_loss, epoch_acc))
-      
+
       if phase == "val" and epoch_acc > best_acc:
         best_acc = epoch_acc
         best_epoch = epoch_i + 1
         best_model = model.state_dict()
         print("Updated best model")
+
+      if epoch_loss > 20.:
+        print(names)
+        return best_model, metrics
 
     print("Epoch took {}".format(format_time(time.time() - t0)))
     print('=========== End Epoch {} / {} ===========\n'.format(epoch_i + 1, n_epochs))
