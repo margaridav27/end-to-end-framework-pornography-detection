@@ -66,4 +66,4 @@ echo "Testing MobileNetV2"
 python -m src.model_testing \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/middle-20" \
        --save_loc "results/middle-20/baseline/pornography-800/results" \
-       --state_dict_loc "results/middle-20/baseline/pornography-800/models/model_mobilenetv2_freeze_True_epochs_10_batch_32_optim_sgd.pth"
+       --state_dict_loc "results/middle-20/baseline/pornography-800/models/model_mobilenet_v2_freeze_True_epochs_10_batch_32_optim_sgd.pth"

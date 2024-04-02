@@ -66,4 +66,4 @@ echo "Testing MobileNetV2"
 python -m src.model_testing \
        --data_loc "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20" \
        --save_loc "results/even-20/data-aug/pornography-2k/results" \
-       --state_dict_loc "results/even-20/data-aug/pornography-2k/models/mobilenetv2_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth"
+       --state_dict_loc "results/even-20/data-aug/pornography-2k/models/mobilenet_v2_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth"
