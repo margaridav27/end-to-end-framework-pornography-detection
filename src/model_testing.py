@@ -1,10 +1,12 @@
 from src.utils.misc import seed, set_device
 from src.utils.data import load_split, get_transforms
 from src.utils.model import init_model, test_model
+from src.utils.evaluation import save_confusion_matrix
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import argparse
+import pandas as pd
 from typing import List, Tuple
 
 import torch
@@ -78,6 +80,7 @@ def main():
     
     device = set_device()
 
+    print("Loading model and test data...")
     model_filename, model_name = _get_model_filename_and_name(args.state_dict_loc)
     model = _load_model(model_name, args.state_dict_loc, device)
     split = _get_split(model_filename)
@@ -90,11 +93,15 @@ def main():
         args.norm_std
     )
     
-    print("Model testing started...")
+    print("Model testing started...\n")
+    results = test_model(model, dataloader, device)
+
+    print("Saving results...")
     os.makedirs(args.save_loc, exist_ok=True)
     results_save_loc = f"{args.save_loc}/{model_filename}"
-    test_model(model, dataloader, device, results_save_loc)
-    print("Ground-truth and predictions. Testing process has finished.\n\n")
+    pd.DataFrame(results).to_csv(f"{results_save_loc}.csv", index=False)
+    save_confusion_matrix(f"{results_save_loc}_confusion_matrix.png", results["Target"], results["Prediction"])
+    print("Results saved. Testing process has finished.\n\n")
 
 
 if __name__ == "__main__":

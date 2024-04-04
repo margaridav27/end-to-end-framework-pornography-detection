@@ -29,7 +29,7 @@ def _parse_arguments():
     parser.add_argument("--attribute_kwargs", type=str, help="JSON string representing keyword arguments for calling the attribute method.")
     parser.add_argument("--noise_tunnel", action="store_true", default=False)
     parser.add_argument("--noise_tunnel_type", type=str, default="SGSQ", help="NoiseTunnel smoothing type. Ignored if --noise_tunnel is False.")
-    parser.add_argument("--noise_tunnel_samples", type=int, default=10, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
+    parser.add_argument("--noise_tunnel_samples", type=int, default=5, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
     
     args = parser.parse_args()
 

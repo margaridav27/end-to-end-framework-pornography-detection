@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 
+import wandb
+
 
 def get_pytorch_model(model_name: str, weights: str = None):
   model_constructor = getattr(models, model_name, None)
@@ -67,8 +69,10 @@ def train_model(
     dataloaders,
     dataset_sizes,
     optim, 
+    learning_rate,
     n_epochs, 
-    device
+    device,
+    wandb_on
 ):
   '''
     General function to train a model
@@ -78,9 +82,8 @@ def train_model(
   criterion = nn.BCEWithLogitsLoss() 
 
   params = list(filter(lambda p: p.requires_grad, model.parameters()))
-  lr, momentum = 0.001, 0.9
-  if optim == "adam": optimizer = torch.optim.Adam(params, lr)
-  else: optimizer = torch.optim.SGD(params, lr, momentum)
+  if optim == "adam": optimizer = torch.optim.Adam(params=params, lr=learning_rate)
+  else: optimizer = torch.optim.SGD(params=params, lr=learning_rate, momentum=0.9)
 
   scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=7, gamma=0.1)
 
@@ -92,6 +95,8 @@ def train_model(
   best_epoch = 1
 
   metrics = { "train_loss": [], "train_acc": [], "val_loss": [], "val_acc": [] }
+
+  if wandb_on: wandb.watch(model, criterion=criterion, log="all", log_freq=10)
 
   for epoch_i in range(n_epochs):
     print('========== Start Epoch {} / {} =========='.format(epoch_i + 1, n_epochs))
@@ -144,17 +149,17 @@ def train_model(
       epoch_acc = running_corrects.double() / dataset_sizes[phase]
       metrics[f"{phase}_acc"].append(epoch_acc.item())
       
-      print("{} Loss: {:.4f} | Acc: {:.4f}".format("Training" if phase == "train" else "Validation", epoch_loss, epoch_acc))
-
+      phase_name = "Training" if phase == "train" else "Validation"
+      print("{} Loss: {:.4f} | Acc: {:.4f}".format(phase_name, epoch_loss, epoch_acc))
+      if wandb_on:
+        wandb.log({f"{phase_name} Loss: {epoch_loss}"}, step=epoch_i)
+        wandb.log({f"{phase_name} Accuracy: {epoch_acc}"}, step=epoch_i)
+      
       if phase == "val" and epoch_acc > best_acc:
         best_acc = epoch_acc
         best_epoch = epoch_i + 1
         best_model = model.state_dict()
         print("Updated best model")
-
-      if epoch_loss > 20.:
-        print(names)
-        return best_model, metrics
 
     print("Epoch took {}".format(format_time(time.time() - t0)))
     print('=========== End Epoch {} / {} ===========\n'.format(epoch_i + 1, n_epochs))
@@ -162,6 +167,8 @@ def train_model(
   print("Training complete!")
   print("Total training took {}".format(format_time(time.time() - total_t0)))
   print("Best Acc: {:.4f} (epoch {})\n".format(best_acc, best_epoch))
+
+  if wandb_on: wandb.finish()
 
   # Clear gradients
   optimizer.zero_grad()
@@ -188,7 +195,7 @@ def predict(model, input):
   return confidences, preds
 
 
-def test_model(model, dataloader, device, save_loc):
+def test_model(model, dataloader, device):
   '''
     General function to test a model
   '''
@@ -222,11 +229,9 @@ def test_model(model, dataloader, device, save_loc):
   print("Total testing took {:}".format(format_time(time.time() - t0)))
   print("Accuracy: {:.4f} | Precision: {:.4f} | Recall: {:.4f} | F1 Score: {:.4f}".format(accuracy, precision, recall, f1))
 
-  pd.DataFrame({ 
+  return { 
     "Frame": frame_names,
     "Target": targets, 
     "Prediction": predictions,
     "Confidence": predictions_confidence 
-  }).to_csv(f"{save_loc}.csv", index=False)
-
-  save_confusion_matrix(f"{save_loc}_confusion_matrix.png", targets, predictions)
+  }

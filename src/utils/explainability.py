@@ -2,6 +2,7 @@ from src.utils.model import predict
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
+import gc
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, List, Optional, Any, Union
@@ -140,6 +141,12 @@ def generate_explanations(
                     attr_method=method_key if not noise_tunnel else f"{method_key}_NT_{noise_tunnel_type}_{noise_tunnel_samples}", 
                     prediction=pred.item()
                 )
+
+    # Clear model
+    del model
+
+    # Run garbage collector
+    gc.collect()
 
 
 def save_explanation( 
