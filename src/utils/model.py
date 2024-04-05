@@ -152,8 +152,10 @@ def train_model(
       phase_name = "Training" if phase == "train" else "Validation"
       print("{} Loss: {:.4f} | Acc: {:.4f}".format(phase_name, epoch_loss, epoch_acc))
       if wandb_on:
-        wandb.log({f"{phase_name} Loss: {epoch_loss}"}, step=epoch_i)
-        wandb.log({f"{phase_name} Accuracy: {epoch_acc}"}, step=epoch_i)
+        wandb.log({ 
+          f"{phase_name} Loss": epoch_loss, 
+          f"{phase_name} Accuracy": epoch_acc 
+        }, step=epoch_i)
       
       if phase == "val" and epoch_acc > best_acc:
         best_acc = epoch_acc
