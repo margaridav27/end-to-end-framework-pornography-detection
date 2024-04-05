@@ -27,8 +27,8 @@ def _create_data_file(data_loc : str) -> pd.DataFrame:
   for file in os.listdir(data_loc):
     if file.startswith("."): continue
 
-    data["frame"] = file
-    data["label"] = 0 if "nonPorn" in file else 1
+    data["frame"].append(file)
+    data["label"].append(0 if "nonPorn" in file else 1)
 
   df_data = pd.DataFrame(data)
   df_data.to_csv(f"{data_loc}/data.csv", index=False)

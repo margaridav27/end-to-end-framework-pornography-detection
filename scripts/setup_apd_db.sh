@@ -10,19 +10,22 @@
 source_dir="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data"
 
 # Destination directory
-destination_dir="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-agg"
+dest_dir="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-agg"
 
 # Create destination directory if it doesn't exist
-mkdir -p "$destination_dir"
+mkdir -p "$dest_dir"
 
-# Move images from porn directory
-find "$source_dir/porn" -maxdepth 1 -type f -exec mv -t "$destination_dir" {} +
+# Copy images from porn directory
+cp -r "$source_dir/porn/"* "$dest_dir"
 
-# Move images from non-porn directories
-find "$source_dir/nonPorn" \( -name "COCO" -o -name "GVIS" -o -name "ILSVRC2012" -o -name "IMDB-WIKI" \) -type f -exec mv -t "$destination_dir" {} +
+# Copy images from non-porn directories
+cp -r "$source_dir/nonPorn/COCO/"* "$dest_dir"
+cp -r "$source_dir/nonPorn/GVIS/"* "$dest_dir"
+cp -r "$source_dir/nonPorn/ILSVRC2012/"* "$dest_dir"
+cp -r "$source_dir/nonPorn/IMDB-WIKI/"* "$dest_dir"
 
 echo "Images moved successfully."
 
-python -m src.db_utilities.setup_apd_db --data_loc "$destination_dir"
+python -m src.db_utilities.setup_apd_db --data_loc "$dest_dir"
 
 echo "APD-VIDEO all setup."
