@@ -23,7 +23,7 @@ def split_data(df_frames : pd.DataFrame, split_sizes : List[float]) -> Dict[str,
   val_size, test_size = split_sizes
   real_val_size = (1 - test_size) * val_size
 
-  train_videos, test_videos = train_test_split(df_videos, test_size=0.2, random_state=42)
+  train_videos, test_videos = train_test_split(df_videos, test_size=test_size, random_state=42)
   train_videos, val_videos = train_test_split(train_videos, test_size=real_val_size, random_state=42)
 
   train_frames = df_frames[df_frames["frame"].str.contains("|".join(train_videos["video"]))]
