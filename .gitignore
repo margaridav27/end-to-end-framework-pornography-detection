@@ -7,3 +7,6 @@ slurm/
 wandb/
 
 results/
+
+*.out
+*.err
