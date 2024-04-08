@@ -36,8 +36,8 @@ def _get_model_filename_and_name(state_dict_loc : str) -> Tuple[str, str]:
     _, model_filename = os.path.split(state_dict_loc) # Includes .pth
     model_filename, _ = os.path.splitext(model_filename) # Does not include .pth
 
-    model_filename_split = model_filename.split("_")[0]
-    model_name = model_filename_split[0] if model_filename_split[1] == "freeze" else model_filename_split[:2]
+    model_filename_split = model_filename.split("_")
+    model_name = model_filename_split[0] if model_filename_split[1] == "freeze" else "_".join(model_filename_split[:2])
     
     return model_filename, model_name
 
