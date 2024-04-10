@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min24GB               
-#SBATCH --qos=gpu_min24GB_ext                 
+#SBATCH --partition=gpu_min32GB               
+#SBATCH --qos=gpu_min32GB_ext                 
 #SBATCH --job-name=training_aug_apd
 #SBATCH -o training_aug_apd.out               
 #SBATCH -e training_aug_apd.err
