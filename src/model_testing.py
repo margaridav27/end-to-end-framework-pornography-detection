@@ -1,16 +1,14 @@
 from src.utils.misc import seed, set_device
 from src.utils.data import load_split, get_transforms
-from src.utils.model import init_model, test_model
+from src.utils.model import parse_model_filename, load_model, test_model
 from src.utils.evaluation import save_confusion_matrix
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import argparse
 import pandas as pd
-from typing import List, Tuple
+from typing import List
 
-import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
 
 
@@ -31,21 +29,6 @@ def _parse_arguments():
 
     return args
 
-
-def _get_model_filename_and_name(state_dict_loc : str) -> Tuple[str, str]:
-    _, model_filename = os.path.split(state_dict_loc) # Includes .pth
-    model_filename, _ = os.path.splitext(model_filename) # Does not include .pth
-
-    model_filename_split = model_filename.split("_")
-    model_name = model_filename_split[0] if model_filename_split[1] == "freeze" else "_".join(model_filename_split[:2])
-    
-    return model_filename, model_name
-
-
-def _get_split(model_filename : str) -> List[float]:
-    split = model_filename.split("_")[-2:]
-    return [float(i)/100 for i in split]
-
     
 def _get_test_dataloader(
     data_loc : str, 
@@ -61,18 +44,6 @@ def _get_test_dataloader(
     return DataLoader(dataset, batch_size)
 
 
-def _load_model(model_name : str, state_dict_loc : str, device : str) -> nn.Module:
-    print(f"Loading {model_name}...")
-
-    state_dict = torch.load(state_dict_loc)
-    model = init_model(model_name)
-    model = torch.nn.DataParallel(model)
-    model.load_state_dict(state_dict)
-    model = model.to(device)
-
-    return model
-
-
 def main():
     seed()
 
@@ -80,10 +51,10 @@ def main():
     
     device = set_device()
 
-    print("Loading model and test data...")
-    model_filename, model_name = _get_model_filename_and_name(args.state_dict_loc)
-    model = _load_model(model_name, args.state_dict_loc, device)
-    split = _get_split(model_filename)
+    model_filename, model_name, split = parse_model_filename(args.state_dict_loc)
+    
+    print(f"Loading {model_name} and test data...")
+    model = load_model(model_name, args.state_dict_loc, device)
     dataloader = _get_test_dataloader(
         args.data_loc,
         split,

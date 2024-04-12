@@ -1,5 +1,5 @@
 from src.utils.data import load_split, get_transforms
-from src.utils.model import init_model
+from src.utils.model import load_model
 from src.utils.explainability import generate_explanations, ATTRIBUTION_METHODS, NOISE_TUNNEL_TYPES
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
@@ -32,6 +32,9 @@ def _parse_arguments():
     parser.add_argument("--noise_tunnel_samples", type=int, default=5, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
     
     args = parser.parse_args()
+
+    if not os.path.exists(args.state_dict_loc):
+        raise ValueError("Invalid --state_dict_loc argument.")
 
     if args.method not in ATTRIBUTION_METHODS.keys():
         parser.error("Invalid --method.")
@@ -71,24 +74,6 @@ def _load_dataset(
     return PornographyFrameDataset(data_loc, df_test, data_transforms)
 
 
-def _load_model(
-    state_dict_loc : str, 
-    model_name : str, 
-    device : str
-) -> nn.Module :
-    if not os.path.exists(state_dict_loc):
-        raise ValueError("Invalid --state_dict_loc argument.")
-
-    print(f"Loading {model_name}...")
-    state_dict = torch.load(state_dict_loc)
-    model = init_model(model_name)
-    model = torch.nn.DataParallel(model)
-    model.load_state_dict(state_dict)
-    model = model.to(device)
-
-    return model
-
-
 def main():
     args = _parse_arguments()
 
@@ -102,7 +87,7 @@ def main():
     split = [float(i)/100 for i in model_filename.split("_")[-2:]]
 
     dataset = _load_dataset(args.data_loc, split, args.partition, args.input_shape, args.norm_mean, args.norm_std)
-    model = _load_model(args.state_dict_loc, model_name, device)
+    model = load_model(model_name, args.state_dict_loc, device)
     model.eval()
 
     generate_explanations(

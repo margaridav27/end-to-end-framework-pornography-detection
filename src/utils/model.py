@@ -1,9 +1,9 @@
 from src.utils.misc import format_time
-from src.utils.evaluation import calculate_metrics, save_confusion_matrix
+from src.utils.evaluation import calculate_metrics
 
+import os
 import gc
 import time
-import pandas as pd
 
 import torch
 import torch.nn as nn
@@ -11,6 +11,18 @@ import torch.nn.functional as F
 from torchvision import models
 
 import wandb
+
+
+def parse_model_filename(model_filename : str):
+  _, model_filename = os.path.split(model_filename)
+  model_filename_no_ext, _ = os.path.splitext(model_filename) # Does not include .pth
+
+  model_filename_split = model_filename_no_ext.split("_")
+  model_name = model_filename_split[0] if model_filename_split[1] == "freeze" else "_".join(model_filename_split[:2])
+
+  split = [float(i)/100 for i in model_filename_no_ext.split("_")[-2:]]
+
+  return model_filename_no_ext, model_name, split
 
 
 def get_pytorch_model(model_name: str, weights: str = None):
@@ -50,7 +62,7 @@ def modify_last_fcl(model, model_name):
 def init_model(
     model_name : str, 
     weights : str=None, 
-    freeze_layers : bool=True
+    freeze_layers : bool=False
 ): 
   model = get_pytorch_model(model_name, weights)
   
@@ -62,6 +74,22 @@ def init_model(
   model = modify_last_fcl(model, model_name)
 
   return model
+
+
+def load_model(
+    model_name : str, 
+    state_dict_loc : str, 
+    device : str,
+) -> nn.Module :
+    print(f"Loading {model_name}...")
+
+    state_dict = torch.load(state_dict_loc, map_location=device)
+    model = init_model(model_name)
+    model = torch.nn.DataParallel(model)
+    model.load_state_dict(state_dict)
+    model = model.to(device)
+
+    return model
 
 
 def train_model(
