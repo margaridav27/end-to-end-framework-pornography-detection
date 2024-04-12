@@ -1,5 +1,5 @@
 from src.utils.data import load_split, get_transforms
-from src.utils.model import load_model
+from src.utils.model import parse_model_filename, load_model
 from src.utils.explainability import generate_explanations, ATTRIBUTION_METHODS, NOISE_TUNNEL_TYPES
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
@@ -80,12 +80,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
 
-    _, model_filename = os.path.split(args.state_dict_loc) # Includes .pth
-    model_filename = model_filename.split(".")[0] # Does not include .pth
-    model_name = model_filename.split("_")[0]
-
-    split = [float(i)/100 for i in model_filename.split("_")[-2:]]
-
+    model_filename, model_name, split = parse_model_filename(args.state_dict_loc)
     dataset = _load_dataset(args.data_loc, split, args.partition, args.input_shape, args.norm_mean, args.norm_std)
     model = load_model(model_name, args.state_dict_loc, device)
     model.eval()
