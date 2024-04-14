@@ -145,7 +145,7 @@ def train_model(
       running_corrects = 0
 
       # Iterate over data
-      for names, inputs, labels in dataloaders[phase]:
+      for _, inputs, labels in dataloaders[phase]:
         inputs = inputs.to(device)
         labels = labels.to(device)
 

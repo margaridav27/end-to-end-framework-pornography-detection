@@ -9,16 +9,16 @@ from sklearn.model_selection import train_test_split
 
 
 def _parse_arguments():
-    parser = argparse.ArgumentParser(description="Setup APD-VIDEO dataset")
-    parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
+  parser = argparse.ArgumentParser(description="Setup APD-VIDEO dataset")
+  parser.add_argument("--data_loc", type=str, required=True)
+  parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
 
-    args = parser.parse_args()
+  args = parser.parse_args()
 
-    if not os.path.exists(args.data_loc):
-      parser.error("Invalid --data_loc.")
+  if not os.path.exists(args.data_loc):
+    parser.error("Invalid --data_loc.")
 
-    return args
+  return args
 
 
 def _create_data_file(data_loc : str) -> pd.DataFrame:
