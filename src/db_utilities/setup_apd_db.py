@@ -2,6 +2,8 @@ from src.utils.data import log_split, save_split
 
 import os
 import argparse
+import shutil
+from multiprocessing import Pool
 import pandas as pd
 from typing import List
 
@@ -10,13 +12,15 @@ from sklearn.model_selection import train_test_split
 
 def _parse_arguments():
   parser = argparse.ArgumentParser(description="Setup APD-VIDEO dataset")
-  parser.add_argument("--data_loc", type=str, required=True)
+  parser.add_argument("--data_loc", type=str, nargs="+", required=True)
+  parser.add_argument("--save_loc", type=str, required=True)
   parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
 
   args = parser.parse_args()
 
-  if not os.path.exists(args.data_loc):
-    parser.error("Invalid --data_loc.")
+  for loc in args.data_loc:
+    if not os.path.exists(loc):
+      parser.error(f"Invalid --data_loc: {loc}.")
 
   return args
 
@@ -48,12 +52,26 @@ def _create_split_file(df : pd.DataFrame, split_sizes : List[float], save_loc : 
   save_split(save_loc, split_sizes, list(split.keys()), split)
 
 
+def _copytree(source_dir, destination_dir):
+  try:
+    shutil.copytree(source_dir, destination_dir, dirs_exist_ok=True)
+    print(f"Files copied from {source_dir} to {destination_dir}")
+  except Exception as e:
+    print(f"Error copying files from {source_dir} to {destination_dir}: {e}")
+
+
+def _copy_files_to_destination(source_dirs : List[str], destination_dir : str):
+  os.makedirs(destination_dir, exist_ok=True)
+  with Pool(processes=len(source_dirs)) as pool:
+    pool.starmap(_copytree, [(dir, destination_dir) for dir in source_dirs])
+
+
 def main():
   args = _parse_arguments()
 
-  df_data = _create_data_file(args.data_loc)
-
-  _create_split_file(df_data, args.split, args.data_loc)  
+  _copy_files_to_destination(args.data_loc, args.save_loc)
+  df_data = _create_data_file(args.save_loc)
+  _create_split_file(df_data, args.split, args.save_loc)  
 
 
 if __name__ == "__main__":
