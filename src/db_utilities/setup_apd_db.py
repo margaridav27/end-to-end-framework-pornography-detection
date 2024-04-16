@@ -14,6 +14,7 @@ def _parse_arguments():
   parser = argparse.ArgumentParser(description="Setup APD-VIDEO dataset")
   parser.add_argument("--data_loc", type=str, nargs="+", required=True)
   parser.add_argument("--save_loc", type=str, required=True)
+  parser.add_argument("--corrupted_paths_loc", type=str)
   parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
 
   args = parser.parse_args()
@@ -23,6 +24,18 @@ def _parse_arguments():
       parser.error(f"Invalid --data_loc: {loc}.")
 
   return args
+
+
+def _remove_corrupted_files(corrupted_paths_file : str, save_loc : str):
+  with open(corrupted_paths_file, 'r') as file:
+    corrupted_paths = file.readlines()
+
+  for path in corrupted_paths:
+    path = path.strip()
+    _, filename = os.path.split(path)
+    if os.path.exists(os.path.join(save_loc, filename)): 
+      os.remove(os.path.join(save_loc, filename))
+      print(f"Removed corrupted file {filename}")
 
 
 def _create_data_file(data_loc : str) -> pd.DataFrame:
@@ -70,6 +83,8 @@ def main():
   args = _parse_arguments()
 
   _copy_files_to_destination(args.data_loc, args.save_loc)
+  if args.corrupted_paths_loc: 
+    _remove_corrupted_files(args.corrupted_paths_loc, args.save_loc)
   df_data = _create_data_file(args.save_loc)
   _create_split_file(df_data, args.split, args.save_loc)  
 
