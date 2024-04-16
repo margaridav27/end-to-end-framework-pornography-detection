@@ -21,12 +21,10 @@ class PornographyFrameDataset(Dataset):
 
     frame_name = index if isinstance(index, str) else self.frames[index]
     frame_path = f"{self.data_loc}/{frame_name}"
+    frame_label = self.frame_label_dict[frame_name] if isinstance(index, str) else self.labels[index]
     frame = cv2.imread(frame_path)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     
-    frame_label = self.frame_label_dict[frame_name] if isinstance(index, str) else self.labels[index]
-
-    if self.transform:
-      frame = self.transform(image=frame)["image"]
+    if self.transform: frame = self.transform(image=frame)["image"]
 
     return frame_name, frame, frame_label

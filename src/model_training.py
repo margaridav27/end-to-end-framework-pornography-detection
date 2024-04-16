@@ -36,21 +36,6 @@ def _parse_arguments():
     return parser.parse_args()
 
 
-def _load_model(
-    model_name : str, 
-    weights : str, 
-    freeze_layers : bool, 
-    device : str
-) -> nn.Module:
-    print(f"Loading {model_name}...")
-
-    model = init_model(model_name, weights, freeze_layers)
-    model = torch.nn.DataParallel(model)
-    model = model.to(device)
-
-    return model
-
-
 def main():
     seed()
     
@@ -70,13 +55,12 @@ def main():
             }
         )
 
-    print("Loading model and data...")
-    model = _load_model(
-        args.model_name, 
-        args.weights, 
-        args.freeze_layers, 
-        device
-    )
+    print(f"Loading {args.model_name} and data...")
+
+    model = init_model(args.model_name, args.weights, args.freeze_layers)
+    model = nn.DataParallel(model)
+    model = model.to(device)
+
     dataloaders, dataset_sizes = init_data(
         args.data_loc, 
         args.data_aug, 
@@ -88,6 +72,7 @@ def main():
     )
 
     print("Model training started...\n")
+    
     best_model_state_dict, metrics = train_model(
         model,
         dataloaders,
@@ -100,12 +85,15 @@ def main():
     )
 
     print("Saving the best model and corresponding metrics...")
+    
     os.makedirs(args.model_save_loc, exist_ok=True)
     os.makedirs(args.metrics_save_loc, exist_ok=True)
+    
     model_name = f"{args.model_name}_freeze_{args.freeze_layers}_epochs_{args.epochs}_batch_{args.batch_size}_optim_{args.optimizer}_aug_{args.data_aug}_split_{int(args.split[0]*100)}_{int(args.split[1]*100)}"
     torch.save(best_model_state_dict, f"{args.model_save_loc}/{model_name}.pth")
     pd.DataFrame(metrics).to_csv(f"{args.metrics_save_loc}/{model_name}.csv", index=False)
     save_train_val_curves(f"{args.metrics_save_loc}/{model_name}.png", metrics)
+    
     print("Model and metrics saved. Training process has finished.\n\n")
 
 

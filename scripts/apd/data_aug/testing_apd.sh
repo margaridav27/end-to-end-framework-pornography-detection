@@ -8,7 +8,7 @@
 
 echo "Running testing job on APD (aug)"
 
-data_loc="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-agg"
+data_loc="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-aggregated"
 save_loc="results/apd/data-aug/results"
 state_dict_loc="results/apd/data-aug/models"
 
