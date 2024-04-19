@@ -51,6 +51,8 @@ def main():
   files = []
   for loc in args.data_loc:
     files.extend([os.path.join(loc, filename) for filename in os.listdir(loc)])
+    print(f"Checking files in {loc}")
+    print(f"{len(files)} files")
 
   pool = multiprocessing.Pool()
   pool.map(check_validity, files)

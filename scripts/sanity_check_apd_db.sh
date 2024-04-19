@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min11GB      
-#SBATCH --qos=gpu_min11GB_ext        
+#SBATCH --partition=cpu_14cores      
+#SBATCH --qos=cpu_14cores_ext        
 #SBATCH --job-name=sanity_check_apd     
 #SBATCH -o sanity_check_apd.out         
 #SBATCH -e sanity_check_apd.err         
