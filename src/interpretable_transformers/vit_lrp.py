@@ -1,15 +1,16 @@
 # Source: https://github.com/hila-chefer/Transformer-Explainability
 # Vision Transformer (ViT) in PyTorch Hacked together by / Copyright 2020 Ross Wightman
 
+from src.interpretable_transformers.custom_layers import *
+from src.interpretable_transformers.layer_helpers import to_2tuple
+from src.interpretable_transformers.weight_init import trunc_normal_
+
 from typing import Optional, Dict, List
+
+from einops import rearrange
 
 import torch
 import torch.nn as nn
-from einops import rearrange
-
-from .custom_layers import *
-from .weight_init import trunc_normal_
-from .layer_helpers import to_2tuple
 
 
 class PatchEmbed(nn.Module):
