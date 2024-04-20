@@ -1,6 +1,8 @@
 # Source: https://github.com/hila-chefer/Transformer-Explainability
 # Vision Transformer (ViT) in PyTorch Hacked together by / Copyright 2020 Ross Wightman
 
+from typing import Optional, Dict, List
+
 import torch
 import torch.nn as nn
 from einops import rearrange
@@ -12,11 +14,11 @@ from .layer_helpers import to_2tuple
 
 class PatchEmbed(nn.Module):
     def __init__(
-        self, 
-        img_size : int=224, 
-        patch_size : int=16, 
-        in_channels : int=3, 
-        embed_dim : int=768
+        self,
+        img_size: int = 224,
+        patch_size: int = 16,
+        in_channels: int = 3,
+        embed_dim: int = 768,
     ):
         super().__init__()
 
@@ -35,15 +37,17 @@ class PatchEmbed(nn.Module):
             stride=patch_size,
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         _, _, H, W = x.shape
 
         # FIXME: look at relaxing size constraints
-        assert (H == self.img_size[0] and W == self.img_size[1]), f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
+        assert (
+            H == self.img_size[0] and W == self.img_size[1]
+        ), f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
 
         return self.proj(x).flatten(2).transpose(1, 2)
 
-    def relprop(self, cam, **kwargs):
+    def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
         cam = cam.transpose(1, 2)
         cam = cam.reshape(
             cam.shape[0],
@@ -56,12 +60,12 @@ class PatchEmbed(nn.Module):
 
 class Attention(nn.Module):
     def __init__(
-        self, 
-        embed_dim : int, 
-        num_heads : int=8, 
-        qkv_bias : bool=False, 
-        attn_drop : float=0.0, 
-        proj_drop : float=0.0
+        self,
+        embed_dim: int,
+        num_heads: int = 8,
+        qkv_bias: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
     ):
         super().__init__()
 
@@ -73,16 +77,9 @@ class Attention(nn.Module):
         self.matmul1 = einsum("bhid,bhjd->bhij")  # A = Q*K^T
         self.matmul2 = einsum("bhij,bhjd->bhid")  # attn = A*V
 
-        self.qkv = Linear(
-            in_features=embed_dim, 
-            out_features=embed_dim * 3, 
-            bias=qkv_bias
-        )
+        self.qkv = Linear(in_features=embed_dim, out_features=embed_dim * 3, bias=qkv_bias)
         self.attn_drop = Dropout(p=attn_drop)
-        self.proj = Linear(
-            in_features=embed_dim, 
-            out_features=embed_dim
-        )
+        self.proj = Linear(in_features=embed_dim, out_features=embed_dim)
         self.proj_drop = Dropout(p=proj_drop)
         self.softmax = Softmax(dim=-1)
 
@@ -93,46 +90,46 @@ class Attention(nn.Module):
         self._v_cam = None
 
     @property
-    def attn(self):
+    def attn(self) -> torch.Tensor:
         return self._attn
 
     @attn.setter
-    def attn(self, attn):
+    def attn(self, attn: torch.Tensor):
         self._attn = attn
 
     @property
-    def attn_cam(self):
+    def attn_cam(self) -> torch.Tensor:
         return self._attn_cam
 
     @attn_cam.setter
-    def attn_cam(self, cam):
+    def attn_cam(self, cam: torch.Tensor):
         self._attn_cam = cam
 
     @property
-    def attn_gradients(self):
+    def attn_gradients(self) -> torch.Tensor:
         return self._attn_gradients
 
     @attn_gradients.setter
-    def attn_gradients(self, gradients):
+    def attn_gradients(self, gradients: torch.Tensor):
         self._attn_gradients = gradients
 
     @property
-    def v(self):
+    def v(self) -> torch.Tensor:
         return self._v
 
     @v.setter
-    def v(self, v):
+    def v(self, v: torch.Tensor):
         self._v = v
 
     @property
-    def v_cam(self):
+    def v_cam(self) -> torch.Tensor:
         return self._v_cam
 
     @v_cam.setter
-    def v_cam(self, cam):
+    def v_cam(self, cam: torch.Tensor):
         self._v_cam = cam
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         b, n, _, h = *x.shape, self.num_heads
         qkv = self.qkv(x)
         q, k, v = rearrange(qkv, "b n (qkv h d) -> qkv b h n d", qkv=3, h=h)
@@ -155,7 +152,7 @@ class Attention(nn.Module):
 
         return out
 
-    def relprop(self, cam, **kwargs):
+    def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
         cam = self.proj_drop.relprop(cam, **kwargs)
         cam = self.proj.relprop(cam, **kwargs)
         cam = rearrange(cam, "b n (h d) -> b h n d", h=self.num_heads)
@@ -190,9 +187,9 @@ class Mlp(nn.Module):
     def __init__(
         self,
         in_features: int,
-        hidden_features: int=None,
-        out_features: int=None,
-        drop : float=0.0,
+        hidden_features: int = None,
+        out_features: int = None,
+        drop: float = 0.0,
     ):
         super().__init__()
 
@@ -205,7 +202,7 @@ class Mlp(nn.Module):
         self.fc2 = Linear(in_features=hidden_features, out_features=out_features)
         self.drop2 = Dropout(p=drop)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.fc1(x)
         x = self.act(x)
         x = self.drop1(x)
@@ -213,7 +210,7 @@ class Mlp(nn.Module):
         x = self.drop2(x)
         return x
 
-    def relprop(self, cam, **kwargs):
+    def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
         cam = self.drop2.relprop(cam, **kwargs)
         cam = self.fc2.relprop(cam, **kwargs)
         cam = self.drop1.relprop(cam, **kwargs)
@@ -225,12 +222,12 @@ class Mlp(nn.Module):
 class Block(nn.Module):
     def __init__(
         self,
-        embed_dim : int,
-        num_heads : int,
-        mlp_ratio : float=4.0,
-        qkv_bias : bool=False,
-        drop : float=0.0,
-        attn_drop : float=0.0,
+        embed_dim: int,
+        num_heads: int,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = False,
+        drop: float = 0.0,
+        attn_drop: float = 0.0,
     ):
         super().__init__()
 
@@ -244,23 +241,21 @@ class Block(nn.Module):
         )
         self.norm2 = LayerNorm(normalized_shape=embed_dim, eps=1e-6)
         self.mlp = Mlp(
-            in_features=embed_dim, 
-            hidden_features=int(embed_dim * mlp_ratio), 
-            drop=drop
+            in_features=embed_dim, hidden_features=int(embed_dim * mlp_ratio), drop=drop
         )
         self.add1 = Add()
         self.add2 = Add()
         self.clone1 = Clone()
         self.clone2 = Clone()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x1, x2 = self.clone1(x, 2)
         x = self.add1([x1, self.attn(self.norm1(x2))])
         x1, x2 = self.clone2(x, 2)
         x = self.add2([x1, self.mlp(self.norm2(x2))])
         return x
 
-    def relprop(self, cam, **kwargs):
+    def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
         cam1, cam2 = self.add2.relprop(cam, **kwargs)
         cam2 = self.mlp.relprop(cam2, **kwargs)
         cam2 = self.norm2.relprop(cam2, **kwargs)
@@ -277,18 +272,18 @@ class Block(nn.Module):
 class VisionTransformer(nn.Module):
     def __init__(
         self,
-        img_size : int=224,
-        patch_size : int=16,
-        in_channels : int=3,
-        num_classes : int=1000,
-        embed_dim : int=768,
-        depth : int=12,
-        num_heads : int=12,
-        mlp_ratio : float=4.0,
-        qkv_bias : bool=True,
-        mlp_head : bool=False,
-        drop_rate : float=0.0,
-        attn_drop_rate : float=0.0,
+        img_size: int = 224,
+        patch_size: int = 16,
+        in_channels: int = 3,
+        num_classes: int = 1000,
+        embed_dim: int = 768,
+        depth: int = 12,
+        num_heads: int = 12,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = True,
+        mlp_head: bool = False,
+        drop_rate: float = 0.0,
+        attn_drop_rate: float = 0.0,
     ):
         super().__init__()
 
@@ -321,9 +316,9 @@ class VisionTransformer(nn.Module):
 
         if mlp_head:
             self.head = Mlp(
-                in_features=embed_dim, 
-                hidden_features=int(embed_dim * mlp_ratio), 
-                out_features=num_classes
+                in_features=embed_dim,
+                hidden_features=int(embed_dim * mlp_ratio),
+                out_features=num_classes,
             )
         else:
             self.head = Linear(
@@ -342,18 +337,18 @@ class VisionTransformer(nn.Module):
         self._input_grad = None
 
     @property
-    def input_grad(self):
+    def input_grad(self) -> Optional[torch.Tensor]:
         return self._input_grad
 
     @input_grad.setter
-    def input_grad(self, grad):
+    def input_grad(self, grad: torch.Tensor):
         self._input_grad = grad
 
     @property
-    def no_weight_decay(self):
+    def no_weight_decay(self) -> Dict[str, str]:
         return { "pos_embed", "cls_token" }
 
-    def _init_weights(self, m):
+    def _init_weights(self, m: nn.Module):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
@@ -363,31 +358,32 @@ class VisionTransformer(nn.Module):
             nn.init.constant_(m.weight, 1.0)
 
     @staticmethod
-    def compute_rollout_attention(self, all_layer_matrices, start_layer=0):
+    def compute_rollout_attention(
+        all_layer_matrices: List[torch.Tensor], 
+        start_layer: int = 0
+    ) -> torch.Tensor:
         batch_size = all_layer_matrices[0].shape[0]
         num_tokens = all_layer_matrices[0].shape[1]
-        
+
         eye = (
             torch.eye(num_tokens)
             .expand(batch_size, num_tokens, num_tokens)
             .to(all_layer_matrices[0].device)
         )
-        
-        all_layer_matrices = [
-            all_layer_matrices[i] + eye for i in range(len(all_layer_matrices))
-        ]
+
+        all_layer_matrices = [all_layer_matrices[i] + eye for i in range(len(all_layer_matrices))]
         # all_layer_matrices = [
         #     all_layer_matrices[i] / all_layer_matrices[i].sum(dim=-1, keepdim=True)
         #     for i in range(len(all_layer_matrices))
         # ]
-        
+
         joint_attention = all_layer_matrices[start_layer]
         for i in range(start_layer + 1, len(all_layer_matrices)):
             joint_attention = all_layer_matrices[i].bmm(joint_attention)
-        
+
         return joint_attention
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         B = x.shape[0]
 
         # cls_tokens implementation from Phil Wang
@@ -410,17 +406,17 @@ class VisionTransformer(nn.Module):
 
     def relprop(
         self,
-        cam=None,
-        method : str="transformer_attribution",
-        is_ablation : bool=False,
-        start_layer : int=0,
+        cam: torch.Tensor = None,
+        method: str = "transformer_attribution",
+        is_ablation: bool = False,
+        start_layer: int = 0,
         **kwargs,
-    ):
+    ) -> torch.Tensor:
         cam = self.head.relprop(cam, **kwargs)
         cam = cam.unsqueeze(1)
         cam = self.pool.relprop(cam, **kwargs)
         cam = self.norm.relprop(cam, **kwargs)
-        for block in reversed(self.blocks): 
+        for block in reversed(self.blocks):
             cam = block.relprop(cam, **kwargs)
 
         if method == "full":
@@ -435,8 +431,10 @@ class VisionTransformer(nn.Module):
                 attn_heads = block.attn.attn_cam.clamp(min=0)
                 avg_heads = (attn_heads.sum(dim=1) / attn_heads.shape[1]).detach()
                 attn_cams.append(avg_heads)
-            
-            cam = self.compute_rollout_attention(all_layer_matrices=attn_cams, start_layer=start_layer)
+
+            cam = self.compute_rollout_attention(
+                all_layer_matrices=attn_cams, start_layer=start_layer
+            )
             cam = cam[:, 0, 1:]
             return cam
         elif method == "transformer_attribution":
@@ -444,15 +442,17 @@ class VisionTransformer(nn.Module):
             for block in self.blocks:
                 grad = block.attn.attn_gradients
                 grad = grad[0].reshape(-1, grad.shape[-1], grad.shape[-1])
-                
+
                 cam = block.attn.attn_cam
                 cam = cam[0].reshape(-1, cam.shape[-1], cam.shape[-1])
                 cam = grad * cam
                 cam = cam.clamp(min=0).mean(dim=0)
-                
+
                 cams.append(cam.unsqueeze(0))
 
-            rollout = self.compute_rollout_attention(all_layer_matrices=cams, start_layer=start_layer)
+            rollout = self.compute_rollout_attention(
+                all_layer_matrices=cams, start_layer=start_layer
+            )
             cam = rollout[:, 0, 1:]
             return cam
         elif method == "last_layer":
@@ -476,12 +476,12 @@ class VisionTransformer(nn.Module):
         elif method == "second_layer":
             cam = self.blocks[1].attn.attn_cam
             cam = cam[0].reshape(-1, cam.shape[-1], cam.shape[-1])
-            
+
             if is_ablation:
                 grad = self.blocks[1].attn.attn_gradients
                 grad = grad[0].reshape(-1, grad.shape[-1], grad.shape[-1])
                 cam = grad * cam
-            
+
             cam = cam.clamp(min=0).mean(dim=0)
             cam = cam[0, 1:]
             return cam
