@@ -14,6 +14,7 @@ import torch.nn as nn
 
 
 class PatchEmbed(nn.Module):
+    
     def __init__(
         self,
         img_size: int = 224,
@@ -39,14 +40,15 @@ class PatchEmbed(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        _, _, H, W = x.shape
+        B, C, H, W = x.shape
 
         # FIXME: look at relaxing size constraints
         assert (
             H == self.img_size[0] and W == self.img_size[1]
         ), f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
 
-        return self.proj(x).flatten(2).transpose(1, 2)
+        x = self.proj(x).flatten(2).transpose(1, 2)
+        return x
 
     def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
         cam = cam.transpose(1, 2)
@@ -60,6 +62,7 @@ class PatchEmbed(nn.Module):
 
 
 class Attention(nn.Module):
+
     def __init__(
         self,
         embed_dim: int,
@@ -103,16 +106,20 @@ class Attention(nn.Module):
         return self._attn_cam
 
     @attn_cam.setter
-    def attn_cam(self, cam: torch.Tensor):
-        self._attn_cam = cam
+    def attn_cam(self, attn_cam: torch.Tensor):
+        self._attn_cam = attn_cam
 
     @property
     def attn_gradients(self) -> torch.Tensor:
         return self._attn_gradients
 
     @attn_gradients.setter
-    def attn_gradients(self, gradients: torch.Tensor):
-        self._attn_gradients = gradients
+    def attn_gradients(self, attn_gradients: torch.Tensor):
+        self._attn_gradients = attn_gradients
+
+    # Callback for register_hook
+    def set_attn_gradients(self, attn_gradients: torch.Tensor):
+        self.attn_gradients = attn_gradients
 
     @property
     def v(self) -> torch.Tensor:
@@ -127,8 +134,8 @@ class Attention(nn.Module):
         return self._v_cam
 
     @v_cam.setter
-    def v_cam(self, cam: torch.Tensor):
-        self._v_cam = cam
+    def v_cam(self, v_cam: torch.Tensor):
+        self._v_cam = v_cam
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         b, n, _, h = *x.shape, self.num_heads
@@ -144,13 +151,12 @@ class Attention(nn.Module):
         self.attn = attn
 
         if attn.requires_grad:
-            attn.register_hook(self.attn_gradients)
+            attn.register_hook(self.set_attn_gradients)
 
         out = self.matmul2([attn, v])
         out = rearrange(out, "b h n d -> b n (h d)")
         out = self.proj(out)
         out = self.proj_drop(out)
-
         return out
 
     def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
@@ -158,8 +164,7 @@ class Attention(nn.Module):
         cam = self.proj.relprop(cam, **kwargs)
         cam = rearrange(cam, "b n (h d) -> b h n d", h=self.num_heads)
 
-        # attn = A*V
-        cam1, cam_v = self.matmul2.relprop(cam, **kwargs)
+        (cam1, cam_v) = self.matmul2.relprop(cam, **kwargs)  # attn = A*V
         cam1 /= 2
         cam_v /= 2
 
@@ -169,8 +174,7 @@ class Attention(nn.Module):
         cam1 = self.attn_drop.relprop(cam1, **kwargs)
         cam1 = self.softmax.relprop(cam1, **kwargs)
 
-        # A = Q*K^T
-        cam_q, cam_k = self.matmul1.relprop(cam1, **kwargs)
+        (cam_q, cam_k) = self.matmul1.relprop(cam1, **kwargs)  # A = Q*K^T
         cam_q /= 2
         cam_k /= 2
 
@@ -199,28 +203,27 @@ class Mlp(nn.Module):
 
         self.fc1 = Linear(in_features=in_features, out_features=hidden_features)
         self.act = GELU()
-        self.drop1 = Dropout(p=drop)
         self.fc2 = Linear(in_features=hidden_features, out_features=out_features)
-        self.drop2 = Dropout(p=drop)
+        self.drop = Dropout(p=drop)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.fc1(x)
         x = self.act(x)
-        x = self.drop1(x)
+        x = self.drop(x)
         x = self.fc2(x)
-        x = self.drop2(x)
+        x = self.drop(x)
         return x
 
     def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
-        cam = self.drop2.relprop(cam, **kwargs)
+        cam = self.drop.relprop(cam, **kwargs)
         cam = self.fc2.relprop(cam, **kwargs)
-        cam = self.drop1.relprop(cam, **kwargs)
         cam = self.act.relprop(cam, **kwargs)
         cam = self.fc1.relprop(cam, **kwargs)
         return cam
 
 
 class Block(nn.Module):
+
     def __init__(
         self,
         embed_dim: int,
@@ -242,7 +245,9 @@ class Block(nn.Module):
         )
         self.norm2 = LayerNorm(normalized_shape=embed_dim, eps=1e-6)
         self.mlp = Mlp(
-            in_features=embed_dim, hidden_features=int(embed_dim * mlp_ratio), drop=drop
+            in_features=embed_dim, 
+            hidden_features=int(embed_dim * mlp_ratio), 
+            drop=drop
         )
         self.add1 = Add()
         self.add2 = Add()
@@ -257,20 +262,21 @@ class Block(nn.Module):
         return x
 
     def relprop(self, cam: torch.Tensor, **kwargs) -> torch.Tensor:
-        cam1, cam2 = self.add2.relprop(cam, **kwargs)
+        (cam1, cam2) = self.add2.relprop(cam, **kwargs)
         cam2 = self.mlp.relprop(cam2, **kwargs)
         cam2 = self.norm2.relprop(cam2, **kwargs)
         cam = self.clone2.relprop((cam1, cam2), **kwargs)
 
-        cam1, cam2 = self.add1.relprop(cam, **kwargs)
+        (cam1, cam2) = self.add1.relprop(cam, **kwargs)
         cam2 = self.attn.relprop(cam2, **kwargs)
         cam2 = self.norm1.relprop(cam2, **kwargs)
         cam = self.clone1.relprop((cam1, cam2), **kwargs)
-
         return cam
 
 
 class VisionTransformer(nn.Module):
+    """Vision Transformer with support for patch or hybrid CNN input stage"""
+
     def __init__(
         self,
         img_size: int = 224,
@@ -298,7 +304,8 @@ class VisionTransformer(nn.Module):
             embed_dim=embed_dim,
         )
 
-        self.pos_embed = nn.Parameter(torch.zeros(1, self.patch_embed.num_patches + 1, embed_dim))
+        num_patches = self.patch_embed.num_patches
+        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
 
         self.blocks = nn.ModuleList(
@@ -310,10 +317,12 @@ class VisionTransformer(nn.Module):
                     qkv_bias=qkv_bias,
                     drop=drop_rate,
                     attn_drop=attn_drop_rate,
-                ) for _ in range(depth)
+                )
+                for _ in range(depth)
             ]
         )
-        self.norm = LayerNorm(embed_dim)
+
+        self.norm = LayerNorm(normalized_shape=embed_dim, eps=1e-6)
 
         if mlp_head:
             self.head = Mlp(
@@ -327,14 +336,15 @@ class VisionTransformer(nn.Module):
                 out_features=num_classes
             )
 
-        # FIXME not quite sure what the proper weight init is supposed to be,
+        # FIXME: not quite sure what the proper weight init is supposed to be,
         # normal / trunc normal w/ std == .02 similar to other Bert like transformers
         trunc_normal_(self.pos_embed, std=0.02)  # embeddings same as weights?
         trunc_normal_(self.cls_token, std=0.02)
-
         self.apply(self._init_weights)
+
         self.pool = IndexSelect()
         self.add = Add()
+
         self._input_grad = None
 
     @property
@@ -342,14 +352,18 @@ class VisionTransformer(nn.Module):
         return self._input_grad
 
     @input_grad.setter
-    def input_grad(self, grad: torch.Tensor):
-        self._input_grad = grad
+    def input_grad(self, input_grad: torch.Tensor):
+        self._input_grad = input_grad
+
+    # Callback for register_hook
+    def set_input_grad(self, input_grad: torch.Tensor):
+        self.input_grad = input_grad
 
     @property
     def no_weight_decay(self) -> Dict[str, str]:
-        return { "pos_embed", "cls_token" }
+        return {"pos_embed", "cls_token"}
 
-    def _init_weights(self, m: nn.Module):
+    def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
@@ -363,6 +377,7 @@ class VisionTransformer(nn.Module):
         all_layer_matrices: List[torch.Tensor], 
         start_layer: int = 0
     ) -> torch.Tensor:
+        # adding residual consideration
         batch_size = all_layer_matrices[0].shape[0]
         num_tokens = all_layer_matrices[0].shape[1]
 
@@ -386,18 +401,20 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         B = x.shape[0]
+        x = self.patch_embed(x)
 
         # cls_tokens implementation from Phil Wang
-        cls_tokens = self.cls_token.expand(B, -1, -1)
+        cls_tokens = self.cls_token.expand(B, -1, -1) 
 
-        x = self.patch_embed(x)
         x = torch.cat((cls_tokens, x), dim=1)
         x = self.add([x, self.pos_embed])
 
-        # TODO: Small fix to use this in validation and testing
-        if x.requires_grad: x.register_hook(self.input_grad)
+        # Small fix to use this in validation and testing
+        if x.requires_grad:
+            x.register_hook(self.set_input_grad)
 
-        for block in self.blocks: x = block(x)
+        for block in self.blocks:
+            x = block(x)
 
         x = self.norm(x)
         x = self.pool(x, dim=1, indices=torch.tensor(0, device=x.device))
@@ -417,15 +434,17 @@ class VisionTransformer(nn.Module):
         cam = cam.unsqueeze(1)
         cam = self.pool.relprop(cam, **kwargs)
         cam = self.norm.relprop(cam, **kwargs)
+
         for block in reversed(self.blocks):
             cam = block.relprop(cam, **kwargs)
 
         if method == "full":
-            cam, _ = self.add.relprop(cam, **kwargs)
+            (cam, _) = self.add.relprop(cam, **kwargs)
             cam = cam[:, 1:]
             cam = self.patch_embed.relprop(cam, **kwargs)
             cam = cam.sum(dim=1)
             return cam
+
         elif method == "rollout":
             attn_cams = []
             for block in self.blocks:
@@ -433,11 +452,10 @@ class VisionTransformer(nn.Module):
                 avg_heads = (attn_heads.sum(dim=1) / attn_heads.shape[1]).detach()
                 attn_cams.append(avg_heads)
 
-            cam = self.compute_rollout_attention(
-                all_layer_matrices=attn_cams, start_layer=start_layer
-            )
+            cam = self.compute_rollout_attention(all_layer_matrices=attn_cams, start_layer=start_layer)
             cam = cam[:, 0, 1:]
             return cam
+
         elif method == "transformer_attribution":
             cams = []
             for block in self.blocks:
@@ -451,11 +469,11 @@ class VisionTransformer(nn.Module):
 
                 cams.append(cam.unsqueeze(0))
 
-            rollout = self.compute_rollout_attention(
-                all_layer_matrices=cams, start_layer=start_layer
-            )
+            rollout = self.compute_rollout_attention(all_layer_matrices=cams, start_layer=start_layer)
+
             cam = rollout[:, 0, 1:]
             return cam
+
         elif method == "last_layer":
             cam = self.blocks[-1].attn.attn_cam
             cam = cam[0].reshape(-1, cam.shape[-1], cam.shape[-1])
@@ -468,12 +486,14 @@ class VisionTransformer(nn.Module):
             cam = cam.clamp(min=0).mean(dim=0)
             cam = cam[0, 1:]
             return cam
+
         elif method == "last_layer_attn":
             cam = self.blocks[-1].attn.attn
             cam = cam[0].reshape(-1, cam.shape[-1], cam.shape[-1])
             cam = cam.clamp(min=0).mean(dim=0)
             cam = cam[0, 1:]
             return cam
+
         elif method == "second_layer":
             cam = self.blocks[1].attn.attn_cam
             cam = cam[0].reshape(-1, cam.shape[-1], cam.shape[-1])

@@ -2,23 +2,17 @@ from src.utils.misc import seed, set_device
 from src.utils.data import init_data
 from src.utils.model import train_model
 from src.utils.evaluation import save_train_val_curves
-from src.interpretable_transformers.helpers import load_timm_model
-from src.interpretable_transformers.vit_lrp import VisionTransformer
+from src.interpretable_transformers.supported_vit import *
+import src.interpretable_transformers.supported_vit as ViTs 
 
 import os
-import logging
 import argparse
 import pandas as pd
 
 import torch
 import torch.nn as nn
 
-import albumentations as A
-
 import wandb
-
-
-_logger = logging.getLogger(__name__)
 
 
 def _parse_arguments():
@@ -56,7 +50,7 @@ def main():
 
     device = set_device()
 
-    _logger.info("Connecting to W&B")
+    print("Connecting to W&B")
 
     if args.wandb: 
         wandb.login()
@@ -69,19 +63,14 @@ def main():
             }
         )
 
-    _logger.info(f"Loading transformer {args.model_name} and data")
+    print(f"Loading transformer {args.model_name} and data")
 
     NUM_CLASSES = 2
-    
-    state_dict, cfg = load_timm_model(
-        model_name=args.model_name, 
-        pretrained=args.pretrained, 
-        num_classes=NUM_CLASSES
-    )
-
-    model = VisionTransformer(depth=args.depth, num_classes=NUM_CLASSES)
+    constructor = getattr(ViTs, args.model_name, None)
+    if constructor is None:
+        raise ValueError(f"No available constructor for transformer {args.model_name}")
+    model, cfg = constructor(pretrained=args.pretrained, num_classes=NUM_CLASSES)
     model = nn.DataParallel(model)
-    model.module.load_state_dict(state_dict)
     model = model.to(device)
 
     dataloaders, dataset_sizes = init_data(
@@ -94,7 +83,7 @@ def main():
         cfg["std"]
     )
 
-    _logger.info("Training: started")
+    print("Training: started")
 
     best_model_state_dict, metrics = train_model(
         model,
@@ -107,7 +96,7 @@ def main():
         args.wandb
     )
 
-    _logger.info("Saving metrics and best checkpoint")
+    print("Saving metrics and best checkpoint")
 
     os.makedirs(args.model_save_loc, exist_ok=True)
     os.makedirs(args.metrics_save_loc, exist_ok=True)
@@ -117,7 +106,7 @@ def main():
     pd.DataFrame(metrics).to_csv(f"{args.metrics_save_loc}/{model_name}.csv", index=False)
     save_train_val_curves(f"{args.metrics_save_loc}/{model_name}.png", metrics)
 
-    _logger.info("Training: finished\n")
+    print("Training: finished\n")
 
 
 if __name__ == "__main__":
