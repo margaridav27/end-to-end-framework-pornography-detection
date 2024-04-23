@@ -2,8 +2,7 @@ from src.utils.misc import seed, set_device
 from src.utils.data import init_data
 from src.utils.model import train_model
 from src.utils.evaluation import save_train_val_curves
-from src.interpretable_transformers.supported_vit import *
-import src.interpretable_transformers.supported_vit as ViTs 
+from src.interpretable_transformers.vit_config import vit_base_patch16_224
 
 import os
 import argparse
@@ -66,21 +65,18 @@ def main():
     print(f"Loading transformer {args.model_name} and data")
 
     NUM_CLASSES = 2
-    constructor = getattr(ViTs, args.model_name, None)
-    if constructor is None:
-        raise ValueError(f"No available constructor for transformer {args.model_name}")
-    model, cfg = constructor(pretrained=args.pretrained, num_classes=NUM_CLASSES)
+    model = vit_base_patch16_224(pretrained=args.pretrained, num_classes=NUM_CLASSES)
     model = nn.DataParallel(model)
     model = model.to(device)
 
     dataloaders, dataset_sizes = init_data(
-        args.data_loc, 
-        args.data_aug, 
-        args.batch_size, 
+        args.data_loc,
+        args.data_aug,
+        args.batch_size,
         args.split,
-        cfg["input_size"][1], 
-        cfg["mean"],
-        cfg["std"]
+        224,
+        [0.5, 0.5, 0.5],
+        [0.5, 0.5, 0.5],
     )
 
     print("Training: started")

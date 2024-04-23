@@ -1,5 +1,3 @@
-# Source: https://github.com/hila-chefer/Transformer-Explainability
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -56,6 +54,7 @@ def backward_hook(self, grad_input, grad_output):
 class RelProp(nn.Module):
     def __init__(self):
         super(RelProp, self).__init__()
+        # if not self.training:
         self.register_forward_hook(forward_hook)
 
     def gradprop(self, Z, X, S):
@@ -82,7 +81,7 @@ class RelPropSimple(RelProp):
 
 
 class AddEye(RelPropSimple):
-    # input of shape (B, C, seq_len, seq_len)
+    # input of shape B, C, seq_len, seq_len
     def forward(self, input):
         return input + torch.eye(input.shape[2]).expand_as(input).to(input.device)
 
@@ -293,7 +292,9 @@ class Conv2d(nn.Conv2d, RelProp):
             L = (
                 self.X * 0
                 + torch.min(
-                    torch.min(torch.min(self.X, dim=1, keepdim=True)[0], dim=2, keepdim=True)[0],
+                    torch.min(
+                        torch.min(self.X, dim=1, keepdim=True)[0], dim=2, keepdim=True
+                    )[0],
                     dim=3,
                     keepdim=True,
                 )[0]
@@ -301,15 +302,23 @@ class Conv2d(nn.Conv2d, RelProp):
             H = (
                 self.X * 0
                 + torch.max(
-                    torch.max(torch.max(self.X, dim=1, keepdim=True)[0], dim=2, keepdim=True)[0],
+                    torch.max(
+                        torch.max(self.X, dim=1, keepdim=True)[0], dim=2, keepdim=True
+                    )[0],
                     dim=3,
                     keepdim=True,
                 )[0]
             )
             Za = (
-                torch.conv2d(X, self.weight, bias=None, stride=self.stride, padding=self.padding)
-                - torch.conv2d(L, pw, bias=None, stride=self.stride, padding=self.padding)
-                - torch.conv2d(H, nw, bias=None, stride=self.stride, padding=self.padding)
+                torch.conv2d(
+                    X, self.weight, bias=None, stride=self.stride, padding=self.padding
+                )
+                - torch.conv2d(
+                    L, pw, bias=None, stride=self.stride, padding=self.padding
+                )
+                - torch.conv2d(
+                    H, nw, bias=None, stride=self.stride, padding=self.padding
+                )
                 + 1e-9
             )
 
@@ -328,8 +337,12 @@ class Conv2d(nn.Conv2d, RelProp):
             nx = torch.clamp(self.X, max=0)
 
             def f(w1, w2, x1, x2):
-                Z1 = F.conv2d(x1, w1, bias=None, stride=self.stride, padding=self.padding)
-                Z2 = F.conv2d(x2, w2, bias=None, stride=self.stride, padding=self.padding)
+                Z1 = F.conv2d(
+                    x1, w1, bias=None, stride=self.stride, padding=self.padding
+                )
+                Z2 = F.conv2d(
+                    x2, w2, bias=None, stride=self.stride, padding=self.padding
+                )
                 S1 = safe_divide(R, Z1)
                 S2 = safe_divide(R, Z2)
                 C1 = x1 * self.gradprop(Z1, x1, S1)[0]
