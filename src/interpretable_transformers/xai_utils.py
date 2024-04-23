@@ -28,17 +28,6 @@ def unnormalize(image, mean_array, std_array):
     return unnormalized_img
 
 
-# Helper funtion to get figures to be shown after Captum VIZ
-# https://stackoverflow.com/questions/49503869/attributeerror-while-trying-to-load-the-pickled-matplotlib-figure
-def convert_figure(fig):
-
-    # create a dummy figure and use its manager to display "fig"
-    dummy = plt.figure(figsize=(6, 6))
-    new_manager = dummy.canvas.manager
-    new_manager.canvas.figure = fig
-    fig.set_canvas(new_manager.canvas)
-
-
 # Source: https://github.com/hila-chefer/Transformer-Explainability/blob/main/Transformer_explainability.ipynb
 # Function: Generate transformer attribution
 def generate_attribution(
@@ -89,8 +78,8 @@ def generate_attribution(
 
 
 # Source: https://github.com/hila-chefer/Transformer-Explainability/blob/main/Transformer_explainability.ipynb
-# Function: Create overlay of attributions on image
-def overlay(image, attr):
+# Function: Generate visualization of transformer attributions
+def generate_attribution_visualization(image, attr):
     # Apply JET colormap
     heatmap = cv2.applyColorMap(np.uint8(attr * 255), cv2.COLORMAP_JET)
 
@@ -98,13 +87,7 @@ def overlay(image, attr):
     overlay = (np.float32(heatmap) / 255) + np.float32(image)
     overlay = overlay / np.max(overlay)
 
+    overlay = np.uint8(255 * overlay)
+    # overlay = cv2.cvtColor(np.array(overlay), cv2.COLOR_RGB2BGR)
+    
     return overlay
-
-
-# Source: https://github.com/hila-chefer/Transformer-Explainability/blob/main/Transformer_explainability.ipynb
-# Function: Generate visualization of transformer attributions
-def generate_attribution_visualization(image, attr):
-    vis = overlay(image, attr)
-    vis = np.uint8(255 * vis)
-    vis = cv2.cvtColor(np.array(vis), cv2.COLOR_RGB2BGR)
-    return vis
