@@ -1,9 +1,11 @@
 from src.utils.misc import seed, set_device
 from src.utils.data import load_split, get_transforms
-from src.utils.model import parse_model_filename, load_model, test_model
+from src.utils.model import parse_model_filename, test_model
 from src.utils.evaluation import save_confusion_matrix
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
-from src.interpretable_transformers.vit_config import vit_base_patch16_224
+
+import src.interpretable_transformers.vit_config as ViTs
+from src.interpretable_transformers.vit_config import *
 
 import os
 import argparse
@@ -57,8 +59,11 @@ def main():
 
     print(f"Loading transformer {args.model_name} and test data")
 
+    constructor = getattr(ViTs, args.model_name, None)
+    assert constructor is not None, "Invalid --model_name"
+
     NUM_CLASSES = 2
-    model = vit_base_patch16_224(pretrained=True, num_classes=NUM_CLASSES)
+    model = constructor(num_classes=NUM_CLASSES)
     model = nn.DataParallel(model)
     model = model.to(device)
 
@@ -69,8 +74,14 @@ def main():
     model.eval()
 
     model_filename, _, split = parse_model_filename(args.state_dict_loc)
+    cfg = model.module.default_cfg
     dataloader = _get_test_dataloader(
-        args.data_loc, split, args.batch_size, 224, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]
+        args.data_loc,
+        split,
+        args.batch_size,
+        cfg["input_size"][1],
+        cfg["mean"],
+        cfg["std"]
     )
 
     print("Testing: started")

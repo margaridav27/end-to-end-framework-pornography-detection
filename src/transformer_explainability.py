@@ -2,7 +2,9 @@ from src.utils.misc import set_device
 from src.utils.data import load_split, get_transforms
 from src.utils.model import parse_model_filename, predict
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
-from src.interpretable_transformers.vit_config import vit_base_patch16_224
+
+import src.interpretable_transformers.vit_config as ViTs
+from src.interpretable_transformers.vit_config import *
 from src.interpretable_transformers.xai_utils import generate_attribution, generate_attribution_visualization
 
 import os
@@ -60,8 +62,11 @@ def main():
 
     print(f"Loading transformer {args.model_name} and test data")
 
+    constructor = getattr(ViTs, args.model_name, None)
+    assert constructor is not None, "Invalid --model_name"
+
     NUM_CLASSES = 2
-    model = vit_base_patch16_224(pretrained=True, num_classes=NUM_CLASSES)
+    model = constructor(num_classes=NUM_CLASSES)
     model = nn.DataParallel(model)
     model = model.to(device)
 
@@ -72,8 +77,13 @@ def main():
     model.eval()
 
     _, _, split = parse_model_filename(args.state_dict_loc)
+    cfg = model.module.default_cfg
     dataset = _load_test_dataset(
-        args.data_loc, split, 224, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]
+        args.data_loc, 
+        split, 
+        cfg["input_size"][1], 
+        cfg["mean"], 
+        cfg["std"]
     )
 
     for image_name in args.to_explain:

@@ -212,7 +212,7 @@ class Block(nn.Module):
 class PatchEmbed(nn.Module):
     """Image to Patch Embedding"""
 
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
+    def __init__(self, img_size=224, patch_size=16, in_channels=3, embed_dim=768):
         super().__init__()
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
@@ -222,7 +222,7 @@ class PatchEmbed(nn.Module):
         self.num_patches = num_patches
 
         self.proj = Conv2d(
-            in_chans, embed_dim, kernel_size=patch_size, stride=patch_size
+            in_channels, embed_dim, kernel_size=patch_size, stride=patch_size
         )
 
     def forward(self, x):
@@ -252,7 +252,7 @@ class VisionTransformer(nn.Module):
         self,
         img_size=224,
         patch_size=16,
-        in_chans=3,
+        in_channels=3,
         num_classes=1000,
         embed_dim=768,
         depth=12,
@@ -271,7 +271,7 @@ class VisionTransformer(nn.Module):
         self.patch_embed = PatchEmbed(
             img_size=img_size,
             patch_size=patch_size,
-            in_chans=in_chans,
+            in_channels=in_channels,
             embed_dim=embed_dim,
         )
         num_patches = self.patch_embed.num_patches
