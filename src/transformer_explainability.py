@@ -5,11 +5,16 @@ from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import src.interpretable_transformers.vit_config as ViTs
 from src.interpretable_transformers.vit_config import *
-from src.interpretable_transformers.xai_utils import generate_attribution, generate_attribution_visualization
+from src.interpretable_transformers.xai_utils import (
+    generate_attribution,
+    generate_attribution_visualization,
+)
 
 import os
 import argparse
 from typing import List
+import matplotlib.pyplot as plt
+import numpy as np
 import cv2
 
 import torch
@@ -55,6 +60,39 @@ def _load_test_dataset(
     return PornographyFrameDataset(data_loc, df_test, data_transforms)
 
 
+def _explain_and_save(model, cfg, sample, save_loc):
+    name, input, label, pred = sample
+
+    original_image, attr = generate_attribution(
+        image=input,
+        ground_truth_label=label,
+        model=model,
+        mean_array=cfg["mean"],
+        std_array=cfg["std"],
+    )
+
+    overlay = generate_attribution_visualization(
+        image=original_image, 
+        attr=attr
+    )
+
+    # Save image and overlay, side by side
+    jpgs_save_loc = os.path.join(save_loc, "jpgs")
+    os.makedirs(jpgs_save_loc, exist_ok=True)
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    for ax in axs.flat: ax.axis("off") 
+    axs[0].imshow(original_image)
+    axs[1].imshow(overlay)
+    fig.savefig(f"{jpgs_save_loc}/{name}_pred_{pred}.png")
+
+    # Save attribution .npy
+    npys_save_loc = os.path.join(save_loc, "npys")
+    os.makedirs(npys_save_loc, exist_ok=True)
+
+    np.save(f"{npys_save_loc}/{name}_pred_{pred}.npy", attr)
+
+
 def main():
     args = _parse_arguments()
 
@@ -76,7 +114,7 @@ def main():
     # Set model to evaluation mode
     model.eval()
 
-    _, _, split = parse_model_filename(args.state_dict_loc)
+    model_filename, _, split = parse_model_filename(args.state_dict_loc)
     cfg = model.module.default_cfg
     dataset = _load_test_dataset(
         args.data_loc, 
@@ -86,27 +124,39 @@ def main():
         cfg["std"]
     )
 
-    for image_name in args.to_explain:
-        _, input, label = dataset[image_name]
+    save_loc = os.path.join(args.save_loc, model_filename)
 
-        input = input.to(device)
+    if len(args.to_explain) == 0:  # Generate for entire dataset
+        for name, input, label in dataset:
+            if "NonPorn" in name:  # Skip non-porn samples for now
+                continue
 
-        _, pred = predict(model, input.unsqueeze(0))
-        print(f"Prediction for '{image_name}': {pred.item()}")
+            input = input.to(device)
 
-        original_image, attr = generate_attribution(
-            image=input,
-            ground_truth_label=label,
-            model=model,
-            mean_array=[0.5, 0.5, 0.5],
-            std_array=[0.5, 0.5, 0.5],
-        )
+            _, pred = predict(model, input.unsqueeze(0))
+            print(f"Prediction for '{name}': {pred.item()}")
 
-        vis = generate_attribution_visualization(
-            image=original_image,
-            attr=attr
-        )
-        cv2.imwrite("transformer_vis.png", vis)
+            _explain_and_save(
+                model=model,
+                cfg=cfg,
+                sample=(name, input, label, pred.item()),
+                save_loc=save_loc,
+            )
+    else:
+        for image_name in args.to_explain:
+            _, input, label = dataset[image_name]
+
+            input = input.to(device)
+
+            _, pred = predict(model, input.unsqueeze(0))
+            print(f"Prediction for '{image_name}': {pred.item()}")
+
+            _explain_and_save(
+                model=model,
+                cfg=cfg,
+                sample=(image_name, input, label, pred.item()),
+                save_loc=save_loc,
+            )
 
 
 if __name__ == "__main__":

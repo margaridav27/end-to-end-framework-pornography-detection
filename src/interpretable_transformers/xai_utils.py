@@ -87,7 +87,7 @@ def generate_attribution_visualization(image, attr):
     overlay = (np.float32(heatmap) / 255) + np.float32(image)
     overlay = overlay / np.max(overlay)
 
-    overlay = np.uint8(255 * overlay)
-    # overlay = cv2.cvtColor(np.array(overlay), cv2.COLOR_RGB2BGR)
+    overlay = np.uint8(overlay * 255)
+    overlay = cv2.cvtColor(np.array(overlay), cv2.COLOR_RGB2BGR)
     
     return overlay
