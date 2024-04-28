@@ -85,6 +85,7 @@ def _explain_and_save(model, cfg, sample, save_loc):
     axs[0].imshow(original_image)
     axs[1].imshow(overlay)
     fig.savefig(f"{jpgs_save_loc}/{name}_pred_{pred}.png")
+    plt.close(fig)
 
     # Save attribution .npy
     npys_save_loc = os.path.join(save_loc, "npys")
@@ -135,6 +136,10 @@ def main():
 
             _, pred = predict(model, input.unsqueeze(0))
             print(f"Prediction for '{name}': {pred.item()}")
+
+            # temporary
+            if os.path.isfile(f"{os.path.join(save_loc, 'jpgs')}/{name}_pred_{pred.item()}.png"): 
+                continue
 
             _explain_and_save(
                 model=model,

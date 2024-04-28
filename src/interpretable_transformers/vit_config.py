@@ -1,46 +1,6 @@
 from .vit import VisionTransformer
-from .model_utils import load_pretrained
 
-import torch
-
-
-def _configuration(url: str = "", **kwargs):
-    return {
-        "url": url,
-        "input_size": (3, 224, 224),
-        "interpolation": "bicubic",
-        "crop_pct": 0.9,
-        "crop_mode": "center",
-        "num_classes": 1000,
-        "pool_size": None,
-        "first_conv": "patch_embed.proj",
-        "classifier": "head",
-        **kwargs,
-    }
-
-
-_default_configuration = {
-    "vit_base_patch16_224": _configuration(
-        url="https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_base_p16_224-80ecf9dd.pth",
-        mean=(0.5, 0.5, 0.5),
-        std=(0.5, 0.5, 0.5),
-    ),
-    "vit_large_patch16_224": _configuration(
-        url="https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_large_p16_224-4ee7a4dc.pth",
-        mean=(0.5, 0.5, 0.5),
-        std=(0.5, 0.5, 0.5),
-    ),
-    "beit_base_patch16_224": _configuration(
-        url="",
-        mean=(0.5, 0.5, 0.5),
-        std=(0.5, 0.5, 0.5)
-    ),
-    "deit_base_patch16_224": _configuration(
-        url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth", 
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225)
-    ),
-}
+import timm
 
 
 def _conv_filter(state_dict, patch_size=16):
@@ -53,52 +13,31 @@ def _conv_filter(state_dict, patch_size=16):
     return out_dict
 
 
-def vit_base_patch16_224(pretrained: bool = False, num_classes: int = 2, **kwargs):
-    model = VisionTransformer(num_classes=num_classes, qkv_bias=True, **kwargs)
-    model.default_cfg = _default_configuration["vit_base_patch16_224"]
-
-    if pretrained:
-        load_pretrained(
-            model=model,
-            num_classes=model.num_classes,
-            in_channels=kwargs.get("in_channels", 3),
-            filter_fn=_conv_filter,
-        )
-
-    return model
-
-
-def vit_large_patch16_224(pretrained: bool = False, num_classes: int = 2, **kwargs):
-    model = VisionTransformer(
-        num_classes=num_classes,
-        embed_dim=1024,
-        depth=24,
-        num_heads=16,
-        qkv_bias=True,
-        **kwargs,
+def vit_base_patch16_224(pretrained: bool = False, num_classes: int = 2):
+    # https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_base_p16_224-80ecf9dd.pth
+    timm_model = timm.create_model(
+        model_name="vit_base_patch16_224.orig_in21k_ft_in1k",
+        pretrained=pretrained,
+        num_classes=num_classes
     )
-    model.default_cfg = _default_configuration["vit_large_patch16_224"]
 
-    if pretrained:
-        load_pretrained(
-            model=model,
-            num_classes=model.num_classes,
-            in_channels=kwargs.get("in_channels", 3),
-        )
+    model = VisionTransformer(num_classes=num_classes, qkv_bias=True)
+    model.default_cfg = timm_model.pretrained_cfg
+    model.load_state_dict(_conv_filter(timm_model.state_dict()))
 
     return model
 
 
-# Original models from: https://github.com/facebookresearch/deit/blob/main/models.py
-def deit_base_patch16_224(pretrained: bool = False, num_classes: int = 2, **kwargs):
-    model = VisionTransformer(num_classes=num_classes, qkv_bias=True, **kwargs)
-    model.default_cfg = _default_configuration["deit_base_patch16_224"]
+def deit_base_patch16_224(pretrained: bool = False, num_classes: int = 2):
+    # https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth
+    timm_model = timm.create_model(
+        model_name="deit_base_patch16_224.fb_in1k",
+        pretrained=pretrained,
+        num_classes=num_classes,
+    )
 
-    if pretrained:
-        load_pretrained(
-            model=model,
-            num_classes=model.num_classes,
-            in_channels=kwargs.get("in_channels", 3)
-        )
+    model = VisionTransformer(num_classes=num_classes, qkv_bias=True)
+    model.default_cfg = timm_model.pretrained_cfg
+    model.load_state_dict(timm_model.state_dict())
 
     return model
