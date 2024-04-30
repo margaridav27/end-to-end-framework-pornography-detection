@@ -17,7 +17,7 @@ source_porn="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data/porn"
 dest_dir="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-aggregated"
 
 # File with corrupted paths
-corrupted_paths_loc="corrupted_paths.txt"
+corrupted_paths_loc="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/metadata/corrupted_paths.txt"
 
 python -m src.db_utilities.setup_apd_db \
        --data_loc "$source_non_porn_coco" "$source_non_porn_gvis" "$source_non_porn_ilsvrc2012" "$source_non_porn_imdb" "$source_porn" \
