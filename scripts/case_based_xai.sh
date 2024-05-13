@@ -7,7 +7,7 @@
 #SBATCH -e case_based_xai.err
 
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
-save_loc="results/even-20/data-aug/pornography-2k/explanations"
+save_loc="results/pornography-2k/cnns/data-aug/even-20/explanations"
 state_dict_loc="results/even-20/data-aug/pornography-2k/models"
 
 python -m src.case_based_xai \
