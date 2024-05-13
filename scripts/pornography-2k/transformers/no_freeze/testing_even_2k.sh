@@ -9,8 +9,8 @@
 echo "Running transformers testing job on Pornography-2k (even-20)"
 
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
-save_loc="results/transformers/even-20/no-freeze/pornography-2k/results"
-state_dict_loc="results/transformers/even-20/no-freeze/pornography-2k/models"
+save_loc="results/pornography-2k/transformers/no-freeze/even-20/results"
+state_dict_loc="results/pornography-2k/transformers/no-freeze/even-20/models"
 
 
 echo "Testing vit_base_patch16_224"

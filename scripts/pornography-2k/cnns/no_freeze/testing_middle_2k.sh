@@ -1,16 +1,18 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min8GB               
-#SBATCH --qos=gpu_min8GB_ext                 
+#SBATCH --partition=gpu_min8gb               
+#SBATCH --qos=gpu_min8gb_ext                 
 #SBATCH --job-name=testing_2k
 #SBATCH -o testing_2k.out               
 #SBATCH -e testing_2k.err
 
-echo "Running testing job on Pornography-2k (middle-20)"
 
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/middle-20"
-save_loc="results/middle-20/no-freeze/pornography-2k/results"
-state_dict_loc="results/middle-20/no-freeze/pornography-2k/models"
+save_loc="results/pornography-2k/cnns/no-freeze/middle-20/results"
+state_dict_loc="results/pornography-2k/cnns/no-freeze/middle-20/models"
+
+
+echo "Running testing job on Pornography-2k (middle-20)"
 
 # echo "Testing ResNet50"
 # python -m src.model_testing \

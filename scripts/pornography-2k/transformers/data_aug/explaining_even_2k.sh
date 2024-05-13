@@ -6,9 +6,9 @@
 #SBATCH -o transformer_explainability_aug.out               
 #SBATCH -e transformer_explainability_aug.err
 
-state_dict_loc="results/transformers/even-20/data-aug/pornography-2k/models"
+state_dict_loc="results/pornography-2k/transformers/data-aug/even-20/models"
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
-save_loc="results/transformers/even-20/data-aug/pornography-2k/explanations" 
+save_loc="results/pornography-2k/transformers/data-aug/even-20/explanations" 
 
 
 # python -m src.transformer_explainability \

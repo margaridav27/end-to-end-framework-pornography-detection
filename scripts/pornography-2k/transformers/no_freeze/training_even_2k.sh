@@ -10,8 +10,8 @@ echo "Running transformers training job on Pornography-2k (even-20)"
 
 project_title="transformers_training_even_20_2k"
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
-model_save_loc="results/transformers/even-20/no-freeze/pornography-2k/models"
-metrics_save_loc="results/transformers/even-20/no-freeze/pornography-2k/metrics"
+model_save_loc="results/pornography-2k/transformers/no-freeze/even-20/models"
+metrics_save_loc="results/pornography-2k/transformers/no-freeze/even-20/metrics"
 
 
 echo "Training vit_base_patch16_224"

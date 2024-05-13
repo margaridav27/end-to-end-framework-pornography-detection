@@ -1,18 +1,20 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min24GB               
-#SBATCH --qos=gpu_min24GB_ext                 
+#SBATCH --partition=gpu_min24gb               
+#SBATCH --qos=gpu_min24gb_ext                 
 #SBATCH --job-name=training_even_20_2k
 #SBATCH -o training_even_20_2k.out               
 #SBATCH -e training_even_20_2k.err
 
-echo "Running training job on Pornography-2k (even-20)"
 
 project_title="training_even_20_2k"
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
-model_save_loc="results/even-20/no-freeze/pornography-2k/models"
-metrics_save_loc="results/even-20/no-freeze/pornography-2k/metrics"
+model_save_loc="results/pornography-2k/cnns/no-freeze/even-20/models"
+metrics_save_loc="results/pornography-2k/cnns/no-freeze/even-20/metrics"
 epochs=50
+
+
+echo "Running training job on Pornography-2k (even-20)"
 
 echo "Training ResNet50"
 python -m src.model_training \

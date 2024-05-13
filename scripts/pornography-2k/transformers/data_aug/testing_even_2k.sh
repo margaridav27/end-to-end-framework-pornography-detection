@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min8GB               
-#SBATCH --qos=gpu_min8GB_ext                 
+#SBATCH --partition=gpu_min8gb               
+#SBATCH --qos=gpu_min8gb_ext                 
 #SBATCH --job-name=transformers_testing_aug_even_20_2k
 #SBATCH -o transformers_testing_aug_even_20_2k.out               
 #SBATCH -e transformers_testing_aug_even_20_2k.err
@@ -9,8 +9,8 @@
 echo "Running transformers testing job on Pornography-2k (even-20, aug)"
 
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
-save_loc="results/transformers/even-20/data-aug/pornography-2k/results"
-state_dict_loc="results/transformers/even-20/data-aug/pornography-2k/models"
+save_loc="results/pornography-2k/transformers/data-aug/even-20/results"
+state_dict_loc="results/pornography-2k/transformers/data-aug/even-20/models"
 
 
 echo "Testing vit_base_patch16_224"
