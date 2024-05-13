@@ -1,18 +1,20 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min80GB               
-#SBATCH --qos=gpu_min80GB_ext                 
+#SBATCH --partition=gpu_min80gb               
+#SBATCH --qos=gpu_min80gb_ext                 
 #SBATCH --job-name=training_aug_apd
 #SBATCH -o training_aug_apd.out               
 #SBATCH -e training_aug_apd.err
 
-echo "Running training job on APD (aug)"
 
 project_title="training_aug_apd"
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-aggregated"
-model_save_loc="results/apd/data-aug/models"
-metrics_save_loc="results/apd/data-aug/metrics"
+model_save_loc="results/apd/cnns/data-aug/models"
+metrics_save_loc="results/apd/cnns/data-aug/metrics"
 epochs=50
+
+
+echo "Running training job on APD (aug)"
 
 echo "Training ResNet50"
 python -m src.model_training \

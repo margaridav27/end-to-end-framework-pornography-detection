@@ -1,16 +1,18 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min24GB               
-#SBATCH --qos=gpu_min24GB_ext                 
+#SBATCH --partition=gpu_min24gb               
+#SBATCH --qos=gpu_min24gb_ext                 
 #SBATCH --job-name=testing_apd
 #SBATCH -o testing_apd.out               
 #SBATCH -e testing_apd.err
 
-echo "Running testing job on APD"
 
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-aggregated"
-save_loc="results/apd/no-freeze/results"
-state_dict_loc="results/apd/no-freeze/models"
+save_loc="results/apd/cnns/no-freeze/results"
+state_dict_loc="results/apd/cnns/no-freeze/models"
+
+
+echo "Running testing job on APD"
 
 echo "Testing ResNet50"
 python -m src.model_testing \
