@@ -29,7 +29,9 @@ class PornographyFrameDataset(Dataset):
         frame = cv2.imread(frame_path)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+        orig_shape = torch.tensor(frame.shape)
+
         if self.transform:
             frame = self.transform(image=frame)["image"]
 
-        return frame_name, frame, frame_label
+        return frame_name, frame, frame_label, orig_shape

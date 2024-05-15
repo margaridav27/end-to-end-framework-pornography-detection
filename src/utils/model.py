@@ -136,7 +136,7 @@ def train_model(
             running_corrects = 0
 
             # Iterate over data
-            for _, inputs, labels in dataloaders[phase]:
+            for _, inputs, labels, _ in dataloaders[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -240,7 +240,7 @@ def test_model(model, dataloader, device):
     model.eval()  # Set model to evaluate mode
 
     with torch.no_grad():
-        for names, inputs, labels in dataloader:
+        for names, inputs, labels, _ in dataloader:
             inputs = inputs.to(device)
             labels = labels.to(device)
 

@@ -93,7 +93,7 @@ def generate_explanations(
     # If to_explain is specified, generate explanations for those frames
     if to_explain: 
         for frame_name in to_explain:
-            _, input, label = dataset[frame_name]
+            _, input, label, _ = dataset[frame_name]
             input = input.to(device).unsqueeze(0).requires_grad_()
             label = torch.tensor(label).to(device)
             _, pred = predict(model, input)
@@ -115,7 +115,7 @@ def generate_explanations(
     # If to_explain is not specified, generate explanations for the entire test dataset
     else:
         dataloader = DataLoader(dataset, batch_size)
-        for names, inputs, labels in dataloader:
+        for names, inputs, labels, _ in dataloader:
             inputs = inputs.to(device).requires_grad_()
             labels = labels.to(device)
             _, preds = predict(model, inputs)
