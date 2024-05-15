@@ -48,7 +48,7 @@ def main():
 
     model = YOLO(args.weights)
 
-    for names, inputs, _, orig_shapes in dataloader:
+    for names, _, _, orig_shapes in dataloader:        
         results = model.predict(
             source=[f"{args.data_loc}/{name}" for name in names],
             conf=args.conf_thres,
@@ -79,11 +79,8 @@ def main():
             adjusted_boxes[:, 3] = torch.round(adjusted_boxes[:, 3] * h_ratio)
 
             result.update(boxes=adjusted_boxes)
-            
-            result.orig_img = cv2.cvtColor(inputs[i].numpy(), cv2.COLOR_RGB2BGR)
-            result.orig_shape = h_transf, w_transf
 
-            with open(f"{args.save_loc}/{names[i][:-4]}.json", "w") as file:
+            with open(f"{args.save_loc}/{os.path.splitext(names[i])[0]}.json", "w") as file:
                 json.dump(json.loads(result.tojson()), file)
 
 
