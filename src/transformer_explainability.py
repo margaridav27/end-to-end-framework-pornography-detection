@@ -61,7 +61,7 @@ def _load_test_dataset(
 
 
 def _explain_and_save(model, cfg, sample, save_loc):
-    name, input, label, pred = sample
+    name, input, label = sample
 
     original_image, attr = generate_attribution(
         image=input,
@@ -84,14 +84,14 @@ def _explain_and_save(model, cfg, sample, save_loc):
     for ax in axs.flat: ax.axis("off") 
     axs[0].imshow(original_image)
     axs[1].imshow(overlay)
-    fig.savefig(f"{jpgs_save_loc}/{name}_pred_{pred}.png")
+    fig.savefig(f"{jpgs_save_loc}/{name}")
     plt.close(fig)
 
     # Save attribution .npy
     npys_save_loc = os.path.join(save_loc, "npys")
     os.makedirs(npys_save_loc, exist_ok=True)
 
-    np.save(f"{npys_save_loc}/{name}_pred_{pred}.npy", attr)
+    np.save(f"{npys_save_loc}/{os.path.splitext(name)[0]}.npy", attr)
 
 
 def main():
@@ -138,13 +138,13 @@ def main():
             print(f"Prediction for '{name}': {pred.item()}")
 
             # temporary
-            if os.path.isfile(f"{os.path.join(save_loc, 'jpgs')}/{name}_pred_{pred.item()}.png"): 
+            if os.path.isfile(f"{os.path.join(save_loc, 'jpgs')}/{name}"): 
                 continue
 
             _explain_and_save(
                 model=model,
                 cfg=cfg,
-                sample=(name, input, label, pred.item()),
+                sample=(name, input, label),
                 save_loc=save_loc,
             )
     else:

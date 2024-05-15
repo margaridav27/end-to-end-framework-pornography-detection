@@ -161,15 +161,11 @@ def save_explanation(
 ):
     npys_save_loc = os.path.join(save_loc, attr_method, "npys")
     os.makedirs(npys_save_loc, exist_ok=True)
-
-    pngs_save_loc = os.path.join(save_loc, attr_method, "jpgs")
-    os.makedirs(pngs_save_loc, exist_ok=True)
-    
-    print(f"Saving {attr_method} explanation (.npy) for frame {frame_name} to {npys_save_loc}...")
     attribution_np = attr.cpu().detach().numpy()
-    np.save(f"{npys_save_loc}/{frame_name}_pred_{prediction}.npy", attribution_np)
+    np.save(f"{npys_save_loc}/{os.path.splitext(frame_name)[0]}.npy", attribution_np)
 
-    print(f"Saving {attr_method} explanation (.png) for frame {frame_name} to {pngs_save_loc}...")
+    jpgs_save_loc = os.path.join(save_loc, attr_method, "jpgs")
+    os.makedirs(jpgs_save_loc, exist_ok=True)
     fig = visualize_explanation(
         frame=frame,
         frame_name=frame_name,
@@ -181,7 +177,7 @@ def save_explanation(
         side_by_side=True,
         colormap="jet"
     )
-    fig.savefig(f"{pngs_save_loc}/{frame_name}_pred_{prediction}.png")
+    fig.savefig(f"{jpgs_save_loc}/{frame_name}")
     plt.close(fig)
 
 
@@ -212,7 +208,7 @@ def visualize_explanation(
 
     if isinstance(attr, str): attr = np.load(attr)
     if len(attr.shape) == 4: attr = attr[0]
-    attr = np.transpose(attr, (1,2,0))
+    if attr.shape[0] in (3, 4): attr = np.transpose(attr, (1,2,0))
     np_frame = frame.squeeze().cpu().permute(1,2,0).detach().numpy()
 
     if side_by_side:

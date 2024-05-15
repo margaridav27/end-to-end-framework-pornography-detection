@@ -145,7 +145,7 @@ def main():
   # Extract the feature vector of each case frame
   cases_feature_vectors = []
   for filename in cases_filenames:
-    _, case_input, _ = dataset[filename]
+    _, case_input, _, _ = dataset[filename]
     case_input = case_input.to(device).unsqueeze(0)
     case_feature_vector = _extract_feature_vector(feature_extractor, case_input)
     cases_feature_vectors.append(case_feature_vector.to(device))
@@ -170,7 +170,7 @@ def main():
   os.makedirs(real_save_loc, exist_ok=True)
 
   K = 3
-  for names, inputs, _ in dataloader:
+  for names, inputs, _, _ in dataloader:
     inputs = inputs.to(device)
 
     feature_vectors = _extract_feature_vector(feature_extractor, inputs)
