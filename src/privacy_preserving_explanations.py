@@ -218,7 +218,7 @@ def main():
                 attr=_calculate_attribution_in_box(attr_np, (x1, y1, x2, y2)),
             )
 
-            _blur_box(img, (x1, y1, x2, y2))
+            if area != 0: _blur_box(img, (x1, y1, x2, y2))
 
         _save_blurred_explanation(img, attr_np, args.side_by_side, f"{args.save_loc}/{filename}")
 
