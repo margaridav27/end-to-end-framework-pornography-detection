@@ -1,3 +1,5 @@
+from src.utils.explainability import visualize_explanation
+
 import os
 import argparse
 import json
@@ -6,7 +8,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import cv2
 import albumentations as A
-from captum.attr import visualization as viz
 
 
 def _calculate_attribution_in_box(attr, box_coords):
@@ -26,7 +27,7 @@ def _blur_box(image, box_coords):
 
     roi = image[y1:y2, x1:x2]
     if len(roi) == 0: return
-    KSIZE, SIGMA = (7, 7), 15
+    KSIZE, SIGMA = (9, 9), 15
     roi = cv2.GaussianBlur(roi, KSIZE, SIGMA)
     
     image[y1:y2, x1:x2] = roi
@@ -41,43 +42,19 @@ def _add_entry(results, frame, box=None, conf=None, area=None, perc=None, attr=N
     results.setdefault("attr", []).append(attr)
 
 
-def _save_blurred_explanation(image, attr, side_by_side, save_loc):
-    METHOD = "blended_heat_map"
-    SIGN = "positive"
-    COLORMAP = "jet"
-
-    fig = None
-
-    if side_by_side:
-        fig = viz.visualize_image_attr_multiple(
-            attr=attr,
-            original_image=image,
-            methods=["original_image", METHOD],
-            signs=["all", SIGN],
-            cmap=COLORMAP
-        )[0]
-    else:
-        fig = viz.visualize_image_attr(
-            attr=attr,
-            original_image=image,
-            method=METHOD,
-            sign=SIGN,
-            cmap=COLORMAP,
-        )[0]
-
-    fig.savefig(save_loc)
-    plt.close(fig)
-
-
 def _parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_loc", type=str, required=True)
     parser.add_argument("--faces_loc", type=str, required=True)
     parser.add_argument("--explanations_loc", type=str)
-    parser.add_argument("--side_by_side", action="store_true", default=False)
     parser.add_argument("--save_loc", type=str, required=True, help="Directory to save the results and explanations (if applied).")
     parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
     parser.add_argument("--input_shape", type=int, default=224)
+    parser.add_argument("--side_by_side", action="store_true", default=False)
+    parser.add_argument("--show_colorbar", action="store_true", default=False)
+    parser.add_argument("--colormap", type=str, default="jet")
+    parser.add_argument("--outlier_perc", default=2)
+    parser.add_argument("--alpha_overlay", type=float, default=0.5)
 
     args = parser.parse_args()
 
@@ -112,7 +89,7 @@ def main():
         json_file = os.path.join(args.faces_loc, img_name + ".json")
         attr_file = os.path.join(args.explanations_loc, img_name + ".npy")
 
-        # skip saving explanations for images where no faces were detected (no .json file)
+        # Skip saving explanations for images where no faces were detected (no .json file)
         if not os.path.isfile(json_file):
             _add_entry(results=results, frame=filename)
             continue
@@ -151,15 +128,13 @@ def main():
 
             continue
 
-        # load original image
+        # Load original image
         img = cv2.imread(os.path.join(args.data_loc, filename))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = data_transforms(image=img)["image"]
 
-        # load attribution numpy
+        # Load attribution numpy
         attr_np = np.load(attr_file)
-        attr_np = np.transpose(attr_np, (1, 2, 0))
-        attr_np = _normalize_attr(attr_np)
 
         for box in boxes:
             x1, y1, x2, y2, conf, _ = box
@@ -177,7 +152,18 @@ def main():
 
             if area != 0: _blur_box(img, (x1, y1, x2, y2))
 
-        _save_blurred_explanation(img, attr_np, args.side_by_side, f"{args.save_loc}/{filename}")
+        # Save blurred explanation
+        fig = visualize_explanation(
+            image=img,
+            attr=attr_np,
+            side_by_side=args.side_by_side,
+            show_colorbar=args.show_colorbar,
+            colormap=args.colormap,
+            outlier_perc=args.outlier_perc,
+            alpha_overlay=args.alpha_overlay,
+        )
+        fig.savefig(f"{args.save_loc}/{filename}")
+        plt.close(fig)
 
     pd.DataFrame(results).to_csv(f"{args.save_loc}/results.csv", index=False)
 
