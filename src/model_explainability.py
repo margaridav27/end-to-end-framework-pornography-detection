@@ -16,7 +16,7 @@ def _parse_arguments():
     parser.add_argument("--save_loc", type=str, required=True)
     parser.add_argument("--state_dict_loc", type=str, required=True)
     parser.add_argument("--filter", type=str, default="correct", choices=["all", "correct", "incorrect"], help="Filter for predictions to generate explanations. Options: 'all' (all predictions), 'correct' (only correct predictions), 'incorrect' (only incorrect predictions). Default is 'correct'.")
-    parser.add_argument("--partition", type=str, default="test")
+    parser.add_argument("--partition", type=str, default="test", choices=["train", "val", "test"])
     parser.add_argument("--batch_size", type=int, default=4, help="If --to_explain is passed, this will not be taken into consideration.")
     parser.add_argument("--input_shape", type=int, default=224)
     parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
@@ -37,28 +37,28 @@ def _parse_arguments():
     args = parser.parse_args()
 
     if not os.path.exists(args.data_loc):
-        raise ValueError("Invalid --data_loc argument.")
+        parser.error("Invalid --data_loc argument.")
 
     if not os.path.exists(args.state_dict_loc):
-        raise ValueError("Invalid --state_dict_loc argument.")
+        parser.error("Invalid --state_dict_loc argument.")
 
     if args.method not in ATTRIBUTION_METHODS.keys():
-        parser.error("Invalid --method.")
+        parser.error("Invalid --method argument.")
 
     if args.noise_tunnel and args.noise_tunnel_type not in NOISE_TUNNEL_TYPES.keys():
-        parser.error("Invalid --noise_tunnel_type.")
+        parser.error("Invalid --noise_tunnel_type argument.")
 
     if args.method_kwargs:
         try:
             args.method_kwargs = ast.literal_eval(args.method_kwargs)
         except (SyntaxError, ValueError):
-            parser.error("Invalid --method_kwargs.")
+            parser.error("Invalid --method_kwargs argument.")
 
     if args.attribute_kwargs:
         try:
             args.attribute_kwargs = ast.literal_eval(args.attribute_kwargs)
         except (SyntaxError, ValueError):
-            parser.error("Invalid --attribute_kwargs.")
+            parser.error("Invalid --attribute_kwargs argument.")
 
     return args
 
@@ -69,16 +69,23 @@ def main():
     device = set_device()
 
     model_filename, model_name, split = parse_model_filename(args.state_dict_loc)
+    
+    print(f"Loading model {model_name} and {args.partition} data")
+    
+    model = load_model(model_name, args.state_dict_loc, device)
+    model.eval()
 
-    data_transforms = get_transforms(False, args.input_shape, args.norm_mean, args.norm_std)[args.partition]
+    data_transforms = get_transforms(
+        data_aug=False, 
+        input_shape=args.input_shape, 
+        norm_mean=args.norm_mean, 
+        norm_std=args.norm_std
+    )[args.partition]
     dataset = PornographyFrameDataset(
         data_loc=args.data_loc, 
         df=load_split(args.data_loc, split, args.partition)[args.partition], 
         transform=data_transforms
     )
-
-    model = load_model(model_name, args.state_dict_loc, device)
-    model.eval()
 
     generate_explanations(
         save_loc=os.path.join(args.save_loc, model_filename),
@@ -94,13 +101,13 @@ def main():
         noise_tunnel_samples=args.noise_tunnel_samples,
         to_explain=args.to_explain,
         batch_size=args.batch_size,
-        norm_mean=args.norm_mean,
-        norm_std=args.norm_std,
         side_by_side=args.side_by_side,
         show_colorbar=args.show_colorbar,
         colormap=args.colormap,
         outlier_perc=args.outlier_perc,
         alpha_overlay=args.alpha_overlay,
+        norm_mean=args.norm_mean,
+        norm_std=args.norm_std,
     )
 
     # Clear model

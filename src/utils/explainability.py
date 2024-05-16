@@ -66,11 +66,11 @@ def generate_explanations(
     method_key : str, 
     method_kwargs : Optional[Dict[str, Any]] = None, 
     attribute_kwargs : Optional[Dict[str, Any]] = None, 
-    noise_tunnel : Optional[bool] = False, 
-    noise_tunnel_type : Optional[str] = "SGSQ", 
-    noise_tunnel_samples : Optional[int] = 10,
+    noise_tunnel : bool = False, 
+    noise_tunnel_type : str = "SGSQ", 
+    noise_tunnel_samples : int = 10,
     to_explain : Optional[List[str]] = None, 
-    batch_size : Optional[int] = 16, 
+    batch_size : int = 16, 
     **kwargs
 ):
     if not method_kwargs: method_kwargs = {}
@@ -143,21 +143,21 @@ def generate_explanations(
 
 def save_explanation( 
     save_loc : str,
-    image : torch.Tensor,
+    image : Union[torch.Tensor, np.ndarray],
     image_name : str,
-    attr : torch.Tensor,
+    attr : Union[torch.Tensor, np.ndarray],
     **kwargs
 ):
     npys_save_loc = os.path.join(save_loc, "npys")
     os.makedirs(npys_save_loc, exist_ok=True)
-    attribution_np = attr.cpu().detach().numpy()
-    np.save(f"{npys_save_loc}/{os.path.splitext(image_name)[0]}.npy", attribution_np)
+    if torch.is_tensor(attr): attr = attr.cpu.numpy()
+    np.save(f"{npys_save_loc}/{os.path.splitext(image_name)[0]}.npy", attr)
 
     jpgs_save_loc = os.path.join(save_loc, "jpgs")
     os.makedirs(jpgs_save_loc, exist_ok=True)
     fig = visualize_explanation(
         image=image,
-        attr=attribution_np,
+        attr=attr,
         **kwargs
     )
     fig.savefig(f"{jpgs_save_loc}/{image_name}")
@@ -165,7 +165,7 @@ def save_explanation(
 
 
 def visualize_explanation(
-    image: np.ndarray,
+    image: Union[torch.Tensor, np.ndarray],
     attr: Union[np.ndarray, str],
     sign: str = "positive",
     method: str = "blended_heat_map",
@@ -177,11 +177,20 @@ def visualize_explanation(
     **kwargs,
 ):
     CHW = lambda shape: shape[0] in (3, 4)
+    HWC = lambda input: np.transpose(input, (1, 2, 0))
 
+    # Convert attr to numpy array of shape (H, W, C)
     if isinstance(attr, str): attr = np.load(attr)
-    if len(attr.shape) == 4: attr = attr[0]
-    if CHW(attr.shape): attr = np.transpose(attr, (1, 2, 0))
-    if CHW(image.shape): image = np.transpose(image, (1, 2, 0))
+    if len(attr.shape) == 4: attr = np.squeeze(attr)
+    if len(attr.shape) == 2: attr = np.expand_dims(attr, axis=-1)
+    if CHW(attr.shape): attr = HWC(attr)
+    
+    # Convert image to numpy array of shape (H, W, C)
+    if torch.is_tensor(image): image = image.cpu().numpy()
+    if len(image.shape) == 4: image = np.squeeze(image)
+    if CHW(image.shape): image = HWC(image)
+
+    assert image.shape[:2] == attr.shape[:2], "Image and attr shapes must match."
 
     if side_by_side:
         norm_std = kwargs.get("norm_std", None)
