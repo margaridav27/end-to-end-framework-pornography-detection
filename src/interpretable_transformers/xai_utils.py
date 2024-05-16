@@ -1,4 +1,4 @@
-from src.utils.misc import seed
+from src.utils.misc import seed, unnormalize
 
 from .vit_lrp import LRP
 
@@ -11,21 +11,6 @@ import torch
 
 # Fix random seed
 seed()
-
-
-# Function: Function to unnormalize images
-def unnormalize(image, mean_array, std_array):
-
-    # Create a copy
-    unnormalized_img = image.copy()
-
-    # Get channels
-    _, _, channels = unnormalized_img.shape
-
-    for c in range(channels):
-        unnormalized_img[:, :, c] = image[:, :, c] * std_array[c] + mean_array[c]
-
-    return unnormalized_img
 
 
 # Source: https://github.com/hila-chefer/Transformer-Explainability/blob/main/Transformer_explainability.ipynb

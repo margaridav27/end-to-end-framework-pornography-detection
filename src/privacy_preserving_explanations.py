@@ -1,7 +1,5 @@
-from typing import Optional, Union
 import os
 import argparse
-import warnings
 import json
 import numpy as np
 import pandas as pd
@@ -9,47 +7,6 @@ import matplotlib.pyplot as plt
 import cv2
 import albumentations as A
 from captum.attr import visualization as viz
-
-
-# Source: https://github.com/pytorch/captum/blob/master/captum/attr/_utils/visualization.py
-def _normalize_scale(attr: np.ndarray, scale_factor: float):
-    assert scale_factor != 0, "Cannot normalize by scale factor = 0"
-    if abs(scale_factor) < 1e-5:
-        warnings.warn(
-            "Attempting to normalize by value approximately 0, visualized results"
-            "may be misleading. This likely means that attribution values are all"
-            "close to 0."
-        )
-    attr_norm = attr / scale_factor
-    return np.clip(attr_norm, -1, 1)
-
-
-# Source: https://github.com/pytorch/captum/blob/master/captum/attr/_utils/visualization.py
-def _cumulative_sum_threshold(values: np.ndarray, percentile: Union[int, float]):
-    # given values should be non-negative
-    assert percentile >= 0 and percentile <= 100, (
-        "Percentile for thresholding must be " "between 0 and 100 inclusive."
-    )
-    sorted_vals = np.sort(values.flatten())
-    cum_sums = np.cumsum(sorted_vals)
-    threshold_id = np.where(cum_sums >= cum_sums[-1] * 0.01 * percentile)[0][0]
-    return sorted_vals[threshold_id]
-
-
-# Source: https://github.com/pytorch/captum/blob/master/captum/attr/_utils/visualization.py
-def _normalize_attr(
-    attr: np.ndarray,
-    outlier_perc: Union[int, float] = 2,
-    reduction_axis: Optional[int] = None,
-):
-    attr_combined = attr
-    if reduction_axis is not None:
-        attr_combined = np.sum(attr, axis=reduction_axis)
-
-    attr_combined = (attr_combined > 0) * attr_combined
-    threshold = _cumulative_sum_threshold(attr_combined, 100 - outlier_perc)
-
-    return _normalize_scale(attr_combined, threshold)
 
 
 def _calculate_attribution_in_box(attr, box_coords):

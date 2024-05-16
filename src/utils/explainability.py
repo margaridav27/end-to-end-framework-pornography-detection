@@ -1,8 +1,8 @@
+from src.utils.misc import unnormalize
 from src.utils.model import predict
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
-import gc
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, List, Optional, Any, Union
@@ -43,8 +43,8 @@ VISUALIZATION_TYPES = { "heat_map", "blended_heat_map", "masked_image", "alpha_s
 SIGN_TYPES = { "all", "positive", "negative", "absolute_value" }
 
 
+# FIXME: only works with vgg19
 def set_lrp_rules(model : nn.Module):
-    # NOTE: only works with vgg19
     layers = list(model.module.features) + list(model.module.classifier)
     num_layers = len(layers)
 
@@ -63,20 +63,19 @@ def generate_explanations(
     filter : str, 
     device : str,
     dataset : PornographyFrameDataset, 
-    norm_mean : List[float],
-    norm_std : List[float],
     method_key : str, 
     method_kwargs : Optional[Dict[str, Any]] = None, 
     attribute_kwargs : Optional[Dict[str, Any]] = None, 
-    to_explain : Optional[List[str]] = None, 
-    batch_size : Optional[int] = 16, 
     noise_tunnel : Optional[bool] = False, 
     noise_tunnel_type : Optional[str] = "SGSQ", 
-    noise_tunnel_samples : Optional[int] = 10
+    noise_tunnel_samples : Optional[int] = 10,
+    to_explain : Optional[List[str]] = None, 
+    batch_size : Optional[int] = 16, 
+    **kwargs
 ):
     if not method_kwargs: method_kwargs = {}
     if not attribute_kwargs: attribute_kwargs = {}
-                
+
     method = ATTRIBUTION_METHODS[method_key][0](model, **method_kwargs)
     if noise_tunnel:
         method = NoiseTunnel(method)
@@ -91,28 +90,31 @@ def generate_explanations(
         filter_mask = lambda preds, labels: preds != labels
 
     # If to_explain is specified, generate explanations for those frames
+    # No filter is applied in this case
     if to_explain: 
         for frame_name in to_explain:
             _, input, label, _ = dataset[frame_name]
             input = input.to(device).unsqueeze(0).requires_grad_()
-            label = torch.tensor(label).to(device)
             _, pred = predict(model, input)
 
-            if not filter_mask or filter_mask(pred, label):
-                print(f"Generating explanations using {ATTRIBUTION_METHODS[method_key][1]} for {frame_name}...")
-                if method_key == "LRP-CMP": set_lrp_rules(model)
-                attr = method.attribute(inputs=input, target=pred, **attribute_kwargs)
-                save_explanation(
-                    save_loc=save_loc, 
-                    frame=input, 
-                    frame_name=frame_name, 
-                    norm_mean=norm_mean,
-                    norm_std=norm_std,
-                    attr=attr[0], 
-                    attr_method=method_key if not noise_tunnel else f"{method_key}_NT_{noise_tunnel_type}_{noise_tunnel_samples}", 
-                    prediction=pred.item()
-                )
-    # If to_explain is not specified, generate explanations for the entire test dataset
+            if method_key == "LRP-CMP": set_lrp_rules(model)
+            attr = method.attribute(inputs=input, target=pred, **attribute_kwargs)[0]
+            save_explanation(
+                save_loc=os.path.join(
+                    save_loc,
+                    "correct" if pred.item() == label else "incorrect",
+                    (
+                        method_key
+                        if not noise_tunnel
+                        else f"{method_key}_NT_{noise_tunnel_type}_{noise_tunnel_samples}"
+                    ),
+                ),
+                image=input.squeeze().cpu().permute(1, 2, 0).detach().numpy(),
+                image_name=frame_name,
+                attr=attr,
+                **kwargs,
+            )
+    # If to_explain is not specified, generate explanations for the entire dataset
     else:
         dataloader = DataLoader(dataset, batch_size)
         for names, inputs, labels, _ in dataloader:
@@ -124,117 +126,89 @@ def generate_explanations(
                 mask = filter_mask(preds, labels)
                 names = [name for name, m in zip(names, mask) if m]
                 inputs, preds = inputs[mask], preds[mask]
-            
+
             if len(inputs) == 0: continue 
 
-            print(f"Generating explanations using {ATTRIBUTION_METHODS[method_key][1]} for batch...")
             if method_key == "LRP-CMP": set_lrp_rules(model)
             attrs = method.attribute(inputs=inputs, target=preds, **attribute_kwargs)
-            for name, input, pred, attr in zip(names, inputs, preds, attrs):
+            for name, input, attr in zip(names, inputs, attrs):
                 save_explanation(
-                    save_loc=save_loc, 
-                    frame=input, 
-                    frame_name=name, 
-                    norm_mean=norm_mean,
-                    norm_std=norm_std,
+                    save_loc=os.path.join(save_loc, filter, method_key if not noise_tunnel else f"{method_key}_NT_{noise_tunnel_type}_{noise_tunnel_samples}"), 
+                    image=input.squeeze().cpu().permute(1,2,0).detach().numpy(), 
+                    image_name=name, 
                     attr=attr, 
-                    attr_method=method_key if not noise_tunnel else f"{method_key}_NT_{noise_tunnel_type}_{noise_tunnel_samples}", 
-                    prediction=pred.item()
+                    **kwargs
                 )
-
-    # Clear model
-    del model
-
-    # Run garbage collector
-    gc.collect()
 
 
 def save_explanation( 
     save_loc : str,
-    frame : torch.Tensor,
-    frame_name : str,
-    norm_mean : List[float],
-    norm_std : List[float],
+    image : torch.Tensor,
+    image_name : str,
     attr : torch.Tensor,
-    attr_method : str,
-    prediction : int,
+    **kwargs
 ):
-    npys_save_loc = os.path.join(save_loc, attr_method, "npys")
+    npys_save_loc = os.path.join(save_loc, "npys")
     os.makedirs(npys_save_loc, exist_ok=True)
     attribution_np = attr.cpu().detach().numpy()
-    np.save(f"{npys_save_loc}/{os.path.splitext(frame_name)[0]}.npy", attribution_np)
+    np.save(f"{npys_save_loc}/{os.path.splitext(image_name)[0]}.npy", attribution_np)
 
-    jpgs_save_loc = os.path.join(save_loc, attr_method, "jpgs")
+    jpgs_save_loc = os.path.join(save_loc, "jpgs")
     os.makedirs(jpgs_save_loc, exist_ok=True)
     fig = visualize_explanation(
-        frame=frame,
-        frame_name=frame_name,
-        norm_mean=norm_mean,
-        norm_std=norm_std,
+        image=image,
         attr=attribution_np,
-        attr_method=attr_method,
-        prediction=prediction,
-        side_by_side=True,
-        colormap="jet"
+        **kwargs
     )
-    fig.savefig(f"{jpgs_save_loc}/{frame_name}")
+    fig.savefig(f"{jpgs_save_loc}/{image_name}")
     plt.close(fig)
 
 
 def visualize_explanation(
-    frame,
-    frame_name : str,
-    norm_mean : List[float],
-    norm_std : List[float],
-    attr : Union[np.ndarray, str],
-    attr_method : str,
-    prediction : int,
-    sign : Optional[str] = "positive",
-    vis_method : Optional[str] = "blended_heat_map",
-    side_by_side : Optional[bool] = False,
-    colormap : Optional[str] = None,
-    outlier_perc : Optional[Union[float, int]] = 2,
-    alpha_overlay : Optional[float] = 0.5 
+    image: np.ndarray,
+    attr: Union[np.ndarray, str],
+    sign: str = "positive",
+    method: str = "blended_heat_map",
+    colormap: Optional[str] = None,
+    outlier_perc: Union[float, int] = 2,
+    alpha_overlay: float = 0.5,
+    show_colorbar: bool = False,
+    side_by_side: bool = False,
+    **kwargs,
 ):
-    base_attr_method = attr_method.split("_")[0]
-    noise_tunnel = True if len(attr_method.split("_")) > 1 else False
-
-    title_original_image = f"{frame_name} (pred: {prediction})"
-    title_method = f"{ATTRIBUTION_METHODS[base_attr_method][1]}"
-    if noise_tunnel:
-        noise_tunnel_type = NOISE_TUNNEL_TYPES[attr_method.split("_")[-2]]
-        noise_tunnel_samples = attr_method.split("_")[-1]
-        title_method += f" with Noise Tunnel ({noise_tunnel_type}, {noise_tunnel_samples} samples)"
+    CHW = lambda shape: shape[0] in (3, 4)
 
     if isinstance(attr, str): attr = np.load(attr)
     if len(attr.shape) == 4: attr = attr[0]
-    if attr.shape[0] in (3, 4): attr = np.transpose(attr, (1,2,0))
-    np_frame = frame.squeeze().cpu().permute(1,2,0).detach().numpy()
+    if CHW(attr.shape): attr = np.transpose(attr, (1, 2, 0))
+    if CHW(image.shape): image = np.transpose(image, (1, 2, 0))
 
     if side_by_side:
-        # Denormalize for better visualization
-        np_frame = np.clip(norm_std * np_frame + norm_mean, 0, 1)
+        norm_std = kwargs.get("norm_std", None)
+        norm_mean = kwargs.get("norm_mean", None)
+
+        # Unnormalize for better visualization
+        if norm_std and norm_mean:
+            image = unnormalize(image, norm_mean, norm_std)
 
         return viz.visualize_image_attr_multiple(
             attr=attr,
-            original_image=np_frame,
-            methods=["original_image", vis_method],
+            original_image=image,
+            methods=["original_image", method],
             signs=["all", sign],
-            show_colorbar=True,
             cmap=colormap,
+            show_colorbar=show_colorbar,
             outlier_perc=outlier_perc,
             alpha_overlay=alpha_overlay,
-            titles=[title_original_image, title_method]
         )[0]
     else:
         return viz.visualize_image_attr(
             attr=attr,
-            original_image=np_frame,
-            method=vis_method,
+            original_image=image,
+            method=method,
             sign=sign,
-            show_colorbar=True,
             cmap=colormap,
+            show_colorbar=show_colorbar,
             outlier_perc=outlier_perc,
             alpha_overlay=alpha_overlay,
-            title=f"{title_original_image} - {title_method}"
         )[0]

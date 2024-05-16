@@ -1,25 +1,23 @@
+from src.utils.misc import set_device
 from src.utils.data import load_split, get_transforms
 from src.utils.model import parse_model_filename, load_model
 from src.utils.explainability import generate_explanations, ATTRIBUTION_METHODS, NOISE_TUNNEL_TYPES
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
+import gc
 import ast
 import argparse
-from typing import List
-
-import torch
-import torch.nn as nn
 
 
 def _parse_arguments():
-    parser = argparse.ArgumentParser(description="Training a pytorch model to classify pornographic content")
-    parser.add_argument("--state_dict_loc", type=str, required=True)
+    parser = argparse.ArgumentParser(description="Generating explanations for a model's predictions using Captum library")
     parser.add_argument("--data_loc", type=str, required=True)
     parser.add_argument("--save_loc", type=str, required=True)
-    parser.add_argument("--filter", type=str, default="correct", help="Filter for predictions to generate explanations. Options: 'all' (all predictions), 'correct' (only correct predictions), 'incorrect' (only incorrect predictions). Default is 'correct'.")
+    parser.add_argument("--state_dict_loc", type=str, required=True)
+    parser.add_argument("--filter", type=str, default="correct", choices=["all", "correct", "incorrect"], help="Filter for predictions to generate explanations. Options: 'all' (all predictions), 'correct' (only correct predictions), 'incorrect' (only incorrect predictions). Default is 'correct'.")
     parser.add_argument("--partition", type=str, default="test")
-    parser.add_argument("--batch_size", type=int, default=16, help="If --to_explain is passed, this will not be taken into consideration.")
+    parser.add_argument("--batch_size", type=int, default=4, help="If --to_explain is passed, this will not be taken into consideration.")
     parser.add_argument("--input_shape", type=int, default=224)
     parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
     parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
@@ -30,15 +28,23 @@ def _parse_arguments():
     parser.add_argument("--noise_tunnel", action="store_true", default=False)
     parser.add_argument("--noise_tunnel_type", type=str, default="SGSQ", help="NoiseTunnel smoothing type. Ignored if --noise_tunnel is False.")
     parser.add_argument("--noise_tunnel_samples", type=int, default=5, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
-    
+    parser.add_argument("--side_by_side", action="store_true", default=False)
+    parser.add_argument("--show_colorbar", action="store_true", default=False)
+    parser.add_argument("--colormap", type=str, default="jet")
+    parser.add_argument("--outlier_perc", default=2)
+    parser.add_argument("--alpha_overlay", type=float, default=0.5)
+
     args = parser.parse_args()
+
+    if not os.path.exists(args.data_loc):
+        raise ValueError("Invalid --data_loc argument.")
 
     if not os.path.exists(args.state_dict_loc):
         raise ValueError("Invalid --state_dict_loc argument.")
 
     if args.method not in ATTRIBUTION_METHODS.keys():
         parser.error("Invalid --method.")
-        
+
     if args.noise_tunnel and args.noise_tunnel_type not in NOISE_TUNNEL_TYPES.keys():
         parser.error("Invalid --noise_tunnel_type.")
 
@@ -57,51 +63,51 @@ def _parse_arguments():
     return args
 
 
-def _load_dataset(
-    data_loc : str, 
-    split : List[float], 
-    partition : str,
-    input_shape : int, 
-    norm_mean : List[float], 
-    norm_std : List[float]
-) -> PornographyFrameDataset:
-    if not os.path.exists(data_loc):
-        raise ValueError("Invalid --data_loc argument.")
-
-    print("Loading dataset...")
-    df_test = load_split(data_loc, split, [partition])[partition]
-    data_transforms = get_transforms(False, input_shape, norm_mean, norm_std)[partition]
-    return PornographyFrameDataset(data_loc, df_test, data_transforms)
-
-
 def main():
     args = _parse_arguments()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Device:", device)
+    device = set_device()
 
     model_filename, model_name, split = parse_model_filename(args.state_dict_loc)
-    dataset = _load_dataset(args.data_loc, split, args.partition, args.input_shape, args.norm_mean, args.norm_std)
+
+    data_transforms = get_transforms(False, args.input_shape, args.norm_mean, args.norm_std)[args.partition]
+    dataset = PornographyFrameDataset(
+        data_loc=args.data_loc, 
+        df=load_split(args.data_loc, split, args.partition)[args.partition], 
+        transform=data_transforms
+    )
+
     model = load_model(model_name, args.state_dict_loc, device)
     model.eval()
 
     generate_explanations(
-        save_loc=os.path.join(args.save_loc, model_filename, args.filter),
-        model=model, 
+        save_loc=os.path.join(args.save_loc, model_filename),
+        model=model,
         filter=args.filter,
         device=device,
         dataset=dataset,
-        norm_mean=args.norm_mean,
-        norm_std=args.norm_std, 
-        method_key=args.method, 
-        method_kwargs=args.method_kwargs, 
+        method_key=args.method,
+        method_kwargs=args.method_kwargs,
         attribute_kwargs=args.attribute_kwargs,
-        to_explain=args.to_explain, 
+        noise_tunnel=args.noise_tunnel,
+        noise_tunnel_type=args.noise_tunnel_type,
+        noise_tunnel_samples=args.noise_tunnel_samples,
+        to_explain=args.to_explain,
         batch_size=args.batch_size,
-        noise_tunnel=args.noise_tunnel, 
-        noise_tunnel_type=args.noise_tunnel_type, 
-        noise_tunnel_samples=args.noise_tunnel_samples
+        norm_mean=args.norm_mean,
+        norm_std=args.norm_std,
+        side_by_side=args.side_by_side,
+        show_colorbar=args.show_colorbar,
+        colormap=args.colormap,
+        outlier_perc=args.outlier_perc,
+        alpha_overlay=args.alpha_overlay,
     )
+
+    # Clear model
+    del model
+
+    # Run garbage collector
+    gc.collect()
 
 
 if __name__ == "__main__":

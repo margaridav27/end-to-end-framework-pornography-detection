@@ -1,7 +1,7 @@
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Union, Optional
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import albumentations as A
@@ -40,11 +40,17 @@ def split_data(
 
 
 def load_split(
-    data_loc: str, split_sizes: List[float], partitions: List[str] = []
+    data_loc: str, 
+    split_sizes: List[float], 
+    partitions: Optional[Union[str, List[str]]]
 ) -> Dict[str, pd.DataFrame]:
     df = pd.read_csv(f"{data_loc}/split_{int(split_sizes[0]*100)}_{int(split_sizes[1]*100)}.csv")
+    
     if not partitions:
         partitions = list(df["partition"].unique())
+    
+    if isinstance(partitions, str):
+        partitions = [partitions]
 
     split = {p: df[df["partition"] == p] for p in partitions}
     print("Loaded split.")
