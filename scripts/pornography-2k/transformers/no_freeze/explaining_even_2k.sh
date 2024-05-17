@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min12gb               
-#SBATCH --qos=gpu_min12gb_ext                 
+#SBATCH --partition=gpu_min8gb               
+#SBATCH --qos=gpu_min8gb_ext                 
 #SBATCH --job-name=transformer_explainability
 #SBATCH -o transformer_explainability.out               
 #SBATCH -e transformer_explainability.err
