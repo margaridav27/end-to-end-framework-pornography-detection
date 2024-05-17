@@ -17,7 +17,7 @@ from ultralytics import YOLO
 def _parse_arguments():
     parser = argparse.ArgumentParser(description="YOLO face detection")
     parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--save_loc", type=str, required=True, help="Directory to save the results.")
+    parser.add_argument("--save_loc", type=str, required=True, help="Directory to save the results")
     parser.add_argument("--weights", type=str, default="yolov8n-face.pt")
     parser.add_argument("--conf_thres", type=float, default=0.5, help="Object confidence threshold")
     parser.add_argument("--batch_size", type=int, default=32)
@@ -42,7 +42,7 @@ def main():
     h_transf = w_transf = args.input_shape
     data_transforms = A.Resize(height=h_transf, width=w_transf)
 
-    df_test = load_split(args.data_loc, args.split, ["test"])["test"]
+    df_test = load_split(args.data_loc, args.split, "test")["test"]
     dataset = PornographyFrameDataset(args.data_loc, df_test, data_transforms)
     dataloader = DataLoader(dataset=dataset, batch_size=args.batch_size)
 

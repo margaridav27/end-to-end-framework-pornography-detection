@@ -16,7 +16,6 @@ def _parse_arguments():
     parser.add_argument("--save_loc", type=str, required=True)
     parser.add_argument("--state_dict_loc", type=str, required=True)
     parser.add_argument("--filter", type=str, default="correct", choices=["all", "correct", "incorrect"], help="Filter for predictions to generate explanations. Options: 'all' (all predictions), 'correct' (only correct predictions), 'incorrect' (only incorrect predictions). Default is 'correct'.")
-    parser.add_argument("--partition", type=str, default="test", choices=["train", "val", "test"])
     parser.add_argument("--batch_size", type=int, default=4, help="If --to_explain is passed, this will not be taken into consideration.")
     parser.add_argument("--input_shape", type=int, default=224)
     parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
@@ -45,7 +44,7 @@ def _parse_arguments():
     if args.method not in ATTRIBUTION_METHODS.keys():
         parser.error("Invalid --method argument.")
 
-    if args.noise_tunnel and args.noise_tunnel_type not in NOISE_TUNNEL_TYPES.keys():
+    if args.noise_tunnel_type not in NOISE_TUNNEL_TYPES.keys():
         parser.error("Invalid --noise_tunnel_type argument.")
 
     if args.method_kwargs:
@@ -70,7 +69,7 @@ def main():
 
     model_filename, model_name, split = parse_model_filename(args.state_dict_loc)
     
-    print(f"Loading model {model_name} and {args.partition} data")
+    print(f"Loading model {model_name} and test data")
     
     model = load_model(model_name, args.state_dict_loc, device)
     model.eval()
@@ -80,10 +79,10 @@ def main():
         input_shape=args.input_shape, 
         norm_mean=args.norm_mean, 
         norm_std=args.norm_std
-    )[args.partition]
+    )["test"]
     dataset = PornographyFrameDataset(
         data_loc=args.data_loc, 
-        df=load_split(args.data_loc, split, args.partition)[args.partition], 
+        df=load_split(args.data_loc, split, "test")["test"], 
         transform=data_transforms
     )
 

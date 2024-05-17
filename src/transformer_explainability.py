@@ -9,6 +9,7 @@ from src.interpretable_transformers.vit_config import *
 from src.interpretable_transformers.xai_utils import generate_attribution
 
 import os
+import gc
 import argparse
 
 import torch
@@ -126,6 +127,11 @@ def main():
                 norm_std=cfg["std"],
             )
 
+    # Clear model
+    del model
+
+    # Run garbage collector
+    gc.collect()
 
 if __name__ == "__main__":
     main()
