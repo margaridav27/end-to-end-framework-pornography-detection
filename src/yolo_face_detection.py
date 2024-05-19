@@ -19,7 +19,7 @@ def _parse_arguments():
     parser.add_argument("--data_loc", type=str, required=True)
     parser.add_argument("--save_loc", type=str, required=True, help="Directory to save the results")
     parser.add_argument("--weights", type=str, default="yolov8n-face.pt")
-    parser.add_argument("--conf_thres", type=float, default=0.5, help="Object confidence threshold")
+    parser.add_argument("--conf_thres", type=float, default=0.6, help="Object confidence threshold")
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
     parser.add_argument("--input_shape", type=int, default=224)
