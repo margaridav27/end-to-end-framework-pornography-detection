@@ -117,13 +117,13 @@ def train_model(
     best_acc = 0.0
     best_epoch = 1
 
-    metrics = { "train_loss": [], "train_acc": [], "val_loss": [], "val_acc": [] }
+    metrics = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
 
     if wandb_on:
         wandb.watch(model, criterion=criterion, log="all", log_freq=10)
 
     for epoch_i in range(n_epochs):
-        print("========== Start Epoch {} / {} ==========".format(epoch_i + 1, n_epochs))
+        print(f"========== Start Epoch {epoch_i + 1} / {n_epochs} ==========")
 
         # Measure the training time per epoch
         t0 = time.time()
@@ -169,11 +169,7 @@ def train_model(
             metrics[f"{phase}_acc"].append(epoch_acc.item())
 
             phase_name = "Training" if phase == "train" else "Validation"
-            print(
-                "{} Loss: {:.4f} | Acc: {:.4f}".format(
-                    phase_name, epoch_loss, epoch_acc
-                )
-            )
+            print(f"{phase_name} Loss: {epoch_loss:.4f} | Acc: {epoch_acc:.4f}")
             if wandb_on:
                 wandb.log(
                     {
@@ -189,12 +185,12 @@ def train_model(
                 best_model = model.state_dict()
                 print("Updated best model")
 
-        print("Epoch took {}".format(format_time(time.time() - t0)))
-        print("=========== End Epoch {} / {} ===========\n".format(epoch_i + 1, n_epochs))
+        print(f"Epoch took {format_time(time.time() - t0)}")
+        print(f"=========== End Epoch {epoch_i + 1} / {n_epochs} ===========\n")
 
     print("Training complete!")
-    print("Total training took {}".format(format_time(time.time() - total_t0)))
-    print("Best Acc: {:.4f} (epoch {})\n".format(best_acc, best_epoch))
+    print(f"Total training took {format_time(time.time() - total_t0)}")
+    print(f"Best Acc: {best_acc:.4f} (epoch {best_epoch})\n")
 
     if wandb_on:
         wandb.finish()
@@ -255,12 +251,8 @@ def test_model(model, dataloader, device):
     accuracy, precision, recall, f1 = calculate_metrics(targets, predictions)
 
     print("Testing complete!")
-    print("Total testing took {:}".format(format_time(time.time() - t0)))
-    print(
-        "Accuracy: {:.4f} | Precision: {:.4f} | Recall: {:.4f} | F1 Score: {:.4f}".format(
-            accuracy, precision, recall, f1
-        )
-    )
+    print(f"Total testing took {format_time(time.time() - t0)}")
+    print(f"Accuracy: {accuracy:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f} | F1 Score: {f1:.4f}")
 
     return {
         "Frame": frame_names,

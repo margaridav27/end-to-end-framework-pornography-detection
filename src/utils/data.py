@@ -42,7 +42,7 @@ def split_data(
 def load_split(
     data_loc: str, 
     split_sizes: List[float], 
-    partitions: Optional[Union[str, List[str]]]
+    partitions: Optional[Union[str, List[str]]] = None
 ) -> Dict[str, pd.DataFrame]:
     df = pd.read_csv(f"{data_loc}/split_{int(split_sizes[0]*100)}_{int(split_sizes[1]*100)}.csv")
     
