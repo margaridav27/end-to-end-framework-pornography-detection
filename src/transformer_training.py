@@ -26,7 +26,7 @@ def _parse_arguments():
     parser.add_argument("--pretrained", action="store_true", default=False)
     parser.add_argument("--depth", type=int, default=12, help="Number of hidden layers")
     parser.add_argument("--learning_rate", type=float, default=1e-3)
-    parser.add_argument("--epochs", type=int, default=50)
+    parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--optimizer", type=str, default="sgd", choices=["sgd", "adam"])
     parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
