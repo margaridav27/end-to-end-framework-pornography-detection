@@ -10,38 +10,116 @@
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
 results_loc="results/pornography-2k/cnns/data-aug/even-20"
 
+echo "Captum: Integrated Gradients"
 python -m src.model_explainability \
        --data_loc "$data_loc" \
-       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --save_loc "$results_loc/explanations" \
-       --method "IG" \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "captum" \
+       --method_cfg '{"method_name": "IG"}' \
        --side_by_side
 
+echo "Captum: Deep LIFT"
 python -m src.model_explainability \
        --data_loc "$data_loc" \
-       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --save_loc "$results_loc/explanations" \
-       --method "DEEP-LIFT" \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "captum" \
+       --method_cfg '{"method_name": "DEEP-LIFT"}' \
        --side_by_side
 
+echo "Captum: LRP"
 python -m src.model_explainability \
        --data_loc "$data_loc" \
-       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --save_loc "$results_loc/explanations" \
-       --method "LRP" \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "captum" \
+       --method_cfg '{"method_name": "LRP"}' \
        --side_by_side
 
+echo "Captum: LRP (composite rule)"
 python -m src.model_explainability \
        --data_loc "$data_loc" \
-       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --save_loc "$results_loc/explanations" \
-       --method "LRP-CMP" \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "captum" \
+       --method_cfg '{"method_name": "LRP-CMP"}' \
        --side_by_side
 
+echo "Captum: Occlusion"
+method_cfg='{
+    "method_name": "OCC",
+    "attribute_kwargs": {
+        "sliding_window_shapes": (3,8,8),
+        "strides": (3,4,4)
+    }
+}'
 python -m src.model_explainability \
        --data_loc "$data_loc" \
-       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --save_loc "$results_loc/explanations" \
-       --method "OCC" \
-       --attribute_kwargs '{ "sliding_window_shapes": (3,8,8), "strides": (3,4,4) }' \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "captum" \
+       --method_cfg $method_cfg \
        --side_by_side
+
+
+echo "Zennit: Integrated Gradients"
+method_cfg='{
+    "method_name": "IntegratedGradients",
+    "method_kwargs": {
+        "n_iter": 50
+    }
+}'
+python -m src.model_explainability \
+       --data_loc "$data_loc" \
+       --save_loc "$results_loc/explanations" \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "zennit" \
+       --method_cfg $method_cfg \
+       --side_by_side
+
+echo "Zennit: LRP"
+method_cfg='{
+    "method_name": "Gradient", 
+    "composite_name": "EpsilonGammaBox", 
+    "composite_kwargs": {
+        "low": -2.12, 
+        "high": 2.64
+    }
+}'
+python -m src.model_explainability \
+       --data_loc "$data_loc" \
+       --save_loc "$results_loc/explanations" \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "zennit" \
+       --method_cfg $method_cfg \
+       --side_by_side
+
+echo "Zennit: LRP (composite rule)"
+method_cfg='{
+    "method_name": "Gradient", 
+    "composite_name": "EpsilonPlusFlat", 
+}'
+python -m src.model_explainability \
+       --data_loc "$data_loc" \
+       --save_loc "$results_loc/explanations" \
+       --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+       --library "zennit" \
+       --method_cfg $method_cfg \
+       --side_by_side
+
+# echo "Zennit: Occlusion"
+# method_cfg='{
+#     "method_name": "Occlusion", 
+#     "method_kwargs": {
+#         "window": 8,
+#         "stride": 4
+#     }, 
+# }'
+# python -m src.model_explainability \
+#        --data_loc "$data_loc" \
+#        --save_loc "$results_loc/explanations" \
+#        --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
+#        --library "zennit" \
+#        --method_cfg $method_cfg \
+#        --side_by_side

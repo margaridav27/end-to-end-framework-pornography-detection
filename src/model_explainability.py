@@ -1,7 +1,7 @@
 from src.utils.misc import set_device
 from src.utils.data import load_split, get_transforms
 from src.utils.model import parse_model_filename, load_model
-from src.utils.explainability import generate_explanations, ATTRIBUTION_METHODS, NOISE_TUNNEL_TYPES
+from src.utils.xai import generate_explanations
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
@@ -21,12 +21,8 @@ def _parse_arguments():
     parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
     parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
     parser.add_argument("--to_explain", type=str, nargs="*", default=[], help="Frame names for which an explanation is desired. If no names are given, an explanation for each prediction will be generated.")
-    parser.add_argument("--method", type=str, required=True, help="Method to generate the explanation.")
-    parser.add_argument("--method_kwargs", type=str, help="JSON string representing keyword arguments for initializing the attribution method.")
-    parser.add_argument("--attribute_kwargs", type=str, help="JSON string representing keyword arguments for calling the attribute method.")
-    parser.add_argument("--noise_tunnel", action="store_true", default=False)
-    parser.add_argument("--noise_tunnel_type", type=str, default="SGSQ", help="NoiseTunnel smoothing type. Ignored if --noise_tunnel is False.")
-    parser.add_argument("--noise_tunnel_samples", type=int, default=5, help="Number of randomly generated examples per sample. Ignored if --noise_tunnel is False.")
+    parser.add_argument("--library", type=str, default="captum", choices=["captum", "zennit"])
+    parser.add_argument("--method_cfg", type=str, required=True, help="JSON string representing keyword arguments for initializing the attribution method, according to chosen library.")
     parser.add_argument("--side_by_side", action="store_true", default=False)
     parser.add_argument("--show_colorbar", action="store_true", default=False)
     parser.add_argument("--colormap", type=str, default="jet")
@@ -41,23 +37,11 @@ def _parse_arguments():
     if not os.path.exists(args.state_dict_loc):
         parser.error("Invalid --state_dict_loc argument.")
 
-    if args.method not in ATTRIBUTION_METHODS.keys():
-        parser.error("Invalid --method argument.")
-
-    if args.noise_tunnel_type not in NOISE_TUNNEL_TYPES.keys():
-        parser.error("Invalid --noise_tunnel_type argument.")
-
-    if args.method_kwargs:
+    if args.method_cfg:
         try:
-            args.method_kwargs = ast.literal_eval(args.method_kwargs)
+            args.method_cfg = ast.literal_eval(args.method_cfg)
         except (SyntaxError, ValueError):
-            parser.error("Invalid --method_kwargs argument.")
-
-    if args.attribute_kwargs:
-        try:
-            args.attribute_kwargs = ast.literal_eval(args.attribute_kwargs)
-        except (SyntaxError, ValueError):
-            parser.error("Invalid --attribute_kwargs argument.")
+            parser.error("Invalid --method_cfg argument.")
 
     return args
 
@@ -87,19 +71,15 @@ def main():
     )
 
     generate_explanations(
-        save_loc=os.path.join(args.save_loc, model_filename),
+        save_loc=os.path.join(args.save_loc, model_filename, args.library),
         model=model,
-        filter=args.filter,
-        device=device,
         dataset=dataset,
-        method_key=args.method,
-        method_kwargs=args.method_kwargs,
-        attribute_kwargs=args.attribute_kwargs,
-        noise_tunnel=args.noise_tunnel,
-        noise_tunnel_type=args.noise_tunnel_type,
-        noise_tunnel_samples=args.noise_tunnel_samples,
+        method_cfg=args.method_cfg,
+        library=args.library,
+        filter=args.filter,
         to_explain=args.to_explain,
         batch_size=args.batch_size,
+        device=device,
         side_by_side=args.side_by_side,
         show_colorbar=args.show_colorbar,
         colormap=args.colormap,
