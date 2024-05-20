@@ -93,57 +93,35 @@ python -m src.model_training \
 #        --batch_size 512 \
 #        --wandb
 
-# echo "Training VGG16"
-# python -m src.model_training \
-#        --project_title "$project_title" \
-#        --data_loc "$data_loc" \
-#        --model_save_loc "$model_save_loc" \
-#        --metrics_save_loc "$metrics_save_loc" \
-#        --model_name "vgg16" \
-#        --epochs $epochs \
-#        --batch_size 512 \
-#        --wandb
+echo "Training VGG16"
+python -m src.model_training \
+       --project_title "$project_title" \
+       --data_loc "$data_loc" \
+       --model_save_loc "$model_save_loc" \
+       --metrics_save_loc "$metrics_save_loc" \
+       --model_name "vgg16" \
+       --epochs $epochs \
+       --batch_size 512 \
+       --wandb
 
-# echo "Training VGG19"
-# python -m src.model_training \
-#        --project_title "$project_title" \
-#        --data_loc "$data_loc" \
-#        --model_save_loc "$model_save_loc" \
-#        --metrics_save_loc "$metrics_save_loc" \
-#        --model_name "vgg19" \
-#        --epochs $epochs \
-#        --batch_size 512 \
-#        --wandb
+echo "Training VGG19"
+python -m src.model_training \
+       --project_title "$project_title" \
+       --data_loc "$data_loc" \
+       --model_save_loc "$model_save_loc" \
+       --metrics_save_loc "$metrics_save_loc" \
+       --model_name "vgg19" \
+       --epochs $epochs \
+       --batch_size 512 \
+       --wandb
 
-# echo "Training VGG16_BN"
-# python -m src.model_training \
-#        --project_title "$project_title" \
-#        --data_loc "$data_loc" \
-#        --model_save_loc "$model_save_loc" \
-#        --metrics_save_loc "$metrics_save_loc" \
-#        --model_name "vgg16_bn" \
-#        --epochs $epochs \
-#        --batch_size 512 \
-#        --wandb
-
-# echo "Training VGG19_BN"
-# python -m src.model_training \
-#        --project_title "$project_title" \
-#        --data_loc "$data_loc" \
-#        --model_save_loc "$model_save_loc" \
-#        --metrics_save_loc "$metrics_save_loc" \
-#        --model_name "vgg19_bn" \
-#        --epochs $epochs \
-#        --batch_size 512 \
-#        --wandb
-
-# echo "Training MobileNetV2"
-# python -m src.model_training \
-#        --project_title "$project_title" \
-#        --data_loc "$data_loc" \
-#        --model_save_loc "$model_save_loc" \
-#        --metrics_save_loc "$metrics_save_loc" \
-#        --model_name "mobilenet_v2" \
-#        --epochs $epochs \
-#        --batch_size 512 \
-#        --wandb
+echo "Training MobileNetV2"
+python -m src.model_training \
+       --project_title "$project_title" \
+       --data_loc "$data_loc" \
+       --model_save_loc "$model_save_loc" \
+       --metrics_save_loc "$metrics_save_loc" \
+       --model_name "mobilenet_v2" \
+       --epochs $epochs \
+       --batch_size 512 \
+       --wandb
