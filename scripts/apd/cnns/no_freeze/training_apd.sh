@@ -101,7 +101,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "vgg16" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --wandb
 
 echo "Training VGG19"
@@ -112,7 +112,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "vgg19" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --wandb
 
 echo "Training MobileNetV2"
