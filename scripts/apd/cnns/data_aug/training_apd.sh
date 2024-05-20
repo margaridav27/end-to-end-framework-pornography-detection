@@ -11,7 +11,7 @@ project_title="training_aug_apd"
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/apd-video-db/data-aggregated"
 model_save_loc="results/apd/cnns/data-aug/models"
 metrics_save_loc="results/apd/cnns/data-aug/metrics"
-epochs=50
+epochs=5
 
 
 echo "Running training job on APD (aug)"
@@ -24,7 +24,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "resnet50" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
         
@@ -36,7 +36,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "resnet101" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -48,7 +48,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "resnet152" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -60,7 +60,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "densenet121" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -72,7 +72,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "densenet169" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -84,7 +84,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "densenet201" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -96,7 +96,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "alexnet" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -108,7 +108,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "vgg16" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -120,7 +120,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "vgg19" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -132,7 +132,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "vgg16_bn" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -144,7 +144,7 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "vgg19_bn" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
 
@@ -156,6 +156,6 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "mobilenet_v2" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --data_aug \
        --wandb
