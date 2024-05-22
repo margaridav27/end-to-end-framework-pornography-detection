@@ -41,8 +41,9 @@ def check_imghdr(file_path):
 
 
 def check_validity(file_path):
-  if not ((check_pil(file_path) and check_opencv(file_path) and check_imghdr(file_path))):
-    print(f"{file_path}")
+  if file_path.endswith(('.png', '.jpg', '.jpeg')):
+    if not ((check_pil(file_path) and check_opencv(file_path) and check_imghdr(file_path))):
+      print(f"{file_path}")
 
 
 def main():
