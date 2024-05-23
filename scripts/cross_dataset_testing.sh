@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min12gb               
-#SBATCH --qos=gpu_min12gb_ext                 
+#SBATCH --partition=gpu_min11gb               
+#SBATCH --qos=gpu_min11gb_ext                 
 #SBATCH --job-name=cross_dataset_testing
 #SBATCH -o cross_dataset_testing.out               
 #SBATCH -e cross_dataset_testing.err
