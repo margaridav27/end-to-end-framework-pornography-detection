@@ -39,7 +39,7 @@ def generate_zennit_explanations(
         inputs = inputs.unsqueeze(0)
 
     targets = F.one_hot(targets, num_classes=2)
-    
+
     inputs.to(device)
     targets.to(device)
 
@@ -68,12 +68,12 @@ def generate_zennit_explanations(
     if not method_kwargs:
         method_kwargs = {}
 
-    with method(model=model, composite=composite if composite else None, **method_kwargs) as attributor:
-        _, attributions = attributor(inputs, targets)
-    return attributions.cpu().numpy()
-    # try:
-    #     with method(model=model, composite=composite if composite else None, **method_kwargs) as attributor:
-    #         _, attributions = attributor(inputs, targets)
-    #     return attributions.cpu().numpy()
-    # except:
-    #     raise AssertionError(f"Invalid parameter for Zennit attributor: {method_kwargs}")
+    try:
+        with method(model=model, composite=composite if composite else None, **method_kwargs) as attributor:
+            _, attributions = attributor(inputs, targets)
+        if attributions.requires_grad:
+            return attributions.detach().cpu().numpy()
+        else:
+            return attributions.cpu().numpy()
+    except:
+        raise AssertionError(f"Invalid parameter for Zennit attributor: {method_kwargs}")

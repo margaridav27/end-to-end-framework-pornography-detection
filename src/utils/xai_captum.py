@@ -112,6 +112,9 @@ def generate_captum_explanations(
     # Perform attribution to batch
     try:
         attributions = method.attribute(inputs=inputs, target=targets, **attribute_kwargs)
-        return attributions.cpu().numpy()
+        if attributions.requires_grad:
+            return attributions.detach().cpu().numpy()
+        else:
+            return attributions.cpu().numpy()
     except:
         raise AssertionError(f"Invalid parameter for Captum attribute function: {attribute_kwargs}")
