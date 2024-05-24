@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_min12gb               
-#SBATCH --qos=gpu_min12gb_ext                 
+#SBATCH --partition=gpu_min11gb               
+#SBATCH --qos=gpu_min11gb_ext                 
 #SBATCH --job-name=cross_dataset_testing
 #SBATCH -o cross_dataset_testing.out               
 #SBATCH -e cross_dataset_testing.err
@@ -25,7 +25,7 @@ python -m src.transformer_testing \
        --save_loc "results/cross-dataset-testing/train-2k-test-apd" \
        --model_name "vit_base_patch16_224" \
        --state_dict_loc "results/pornography-2k/transformers/data-aug/even-20/models/vit_base_patch16_224_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
-       --batch_size 64
+       --batch_size 32
 
 echo "Testing vit_large_patch16_224 trained on Pornography-2k (even-20, aug) on APD"
 
@@ -34,4 +34,4 @@ python -m src.transformer_testing \
        --save_loc "results/cross-dataset-testing/train-2k-test-apd" \
        --model_name "vit_large_patch16_224" \
        --state_dict_loc "results/pornography-2k/transformers/data-aug/even-20/models/vit_large_patch16_224_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
-       --batch_size 64
+       --batch_size 32
