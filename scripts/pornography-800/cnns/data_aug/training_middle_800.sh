@@ -7,11 +7,12 @@
 #SBATCH -e training_aug_800.err 
 
 
-project_title="training_aug_800"
+project_title="training_aug_even_20_800"
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/middle-20"
 results_loc="results/pornography-800/cnns/data-aug/middle-20"
-epochs=25
-batch_size=32
+learning_rate=1e-4
+epochs=100
+batch_size=16
 
 
 echo "Running training job on Pornography-800 (middle-20, aug)"
@@ -23,6 +24,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "resnet50" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -35,6 +37,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "resnet101" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -47,6 +50,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "resnet152" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -59,6 +63,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "densenet121" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -71,6 +76,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "densenet169" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -83,6 +89,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "densenet201" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -95,6 +102,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "alexnet" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -107,6 +115,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "vgg16" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -119,6 +128,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "vgg19" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
@@ -131,6 +141,7 @@ python -m src.model_training \
        --model_save_loc "$results_loc/models" \
        --metrics_save_loc "$results_loc/metrics" \
        --model_name "mobilenet_v2" \
+       --learning_rate $learning_rate \
        --epochs $epochs \
        --batch_size $batch_size \
        --data_aug \
