@@ -7,7 +7,7 @@
 #SBATCH -e training_aug_800.err 
 
 
-project_title="training_aug_even_20_800"
+project_title="training_aug_800"
 data_loc="/nas-ctm01/datasets/public/BIOMETRICS/pornography-database/data-processed/middle-20"
 results_loc="results/pornography-800/cnns/data-aug/middle-20"
 learning_rate=1e-4
