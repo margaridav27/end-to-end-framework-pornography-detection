@@ -47,44 +47,40 @@ python -m src.model_explainability \
        --side_by_side
 
 echo "Captum: Occlusion"
-method_cfg='{"method_name": "OCC", "attribute_kwargs": {"sliding_window_shapes": (3,8,8), "strides": (3,4,4)}}'
 python -m src.model_explainability \
        --data_loc "$data_loc" \
        --save_loc "$results_loc/explanations" \
        --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --library "captum" \
-       --method_cfg $method_cfg \
+       --method_cfg '{"method_name": "OCC", "attribute_kwargs": {"sliding_window_shapes": (3,8,8), "strides": (3,4,4)}}' \
        --side_by_side
 
 
 echo "Zennit: Integrated Gradients"
-method_cfg='{"method_name": "IntegratedGradients", "method_kwargs": {"n_iter": 50}}'
 python -m src.model_explainability \
        --data_loc "$data_loc" \
        --save_loc "$results_loc/explanations" \
        --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --library "zennit" \
-       --method_cfg $method_cfg \
+       --method_cfg '{"method_name": "IntegratedGradients", "method_kwargs": {"n_iter": 50}}' \
        --side_by_side
 
 echo "Zennit: LRP"
-method_cfg='{"method_name": "Gradient", "composite_name": "EpsilonGammaBox", "composite_kwargs": {"low": -2.12, "high": 2.64}}'
 python -m src.model_explainability \
        --data_loc "$data_loc" \
        --save_loc "$results_loc/explanations" \
        --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --library "zennit" \
-       --method_cfg $method_cfg \
+       --method_cfg '{"method_name": "Gradient", "composite_name": "EpsilonGammaBox", "composite_kwargs": {"low": -2.12, "high": 2.64}}' \
        --side_by_side
 
 echo "Zennit: LRP (composite rule)"
-method_cfg='{"method_name": "Gradient", "composite_name": "EpsilonPlusFlat"}'
 python -m src.model_explainability \
        --data_loc "$data_loc" \
        --save_loc "$results_loc/explanations" \
        --state_dict_loc "$results_loc/models/vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth" \
        --library "zennit" \
-       --method_cfg $method_cfg \
+       --method_cfg '{"method_name": "Gradient", "composite_name": "EpsilonPlusFlat"}' \
        --side_by_side
 
 # echo "Zennit: Occlusion"

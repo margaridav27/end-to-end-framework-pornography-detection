@@ -6,7 +6,7 @@ from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import gc
-import json
+import ast
 import argparse
 
 
@@ -39,8 +39,8 @@ def _parse_arguments():
 
     if args.method_cfg:
         try:
-            args.method_cfg = json.loads(args.method_cfg)
-        except json.JSONDecodeError:
+            args.method_cfg = ast.literal_eval(args.method_cfg)
+        except:
             parser.error("Invalid --method_cfg argument.")
 
     return args
