@@ -141,7 +141,10 @@ def init_data(
         p: PornographyFrameDataset(data_loc, dfs[p], data_transforms.get(p))
         for p in partitions
     }
-    dataloaders = {p: DataLoader(datasets[p], batch_size) for p in partitions}
+    dataloaders = {
+        p: DataLoader(dataset=datasets[p], batch_size=batch_size, num_workers=8)
+        for p in partitions
+    }
     dataset_sizes = {p: len(datasets[p]) for p in partitions}
 
     return dataloaders, dataset_sizes
