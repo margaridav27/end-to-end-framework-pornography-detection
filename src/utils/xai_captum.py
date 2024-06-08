@@ -50,7 +50,7 @@ def get_captum_method_name(
     name = f"{method_name}"
     if noise_tunnel:
         assert noise_tunnel_type is not None and noise_tunnel_samples is not None
-        name +=f"_NT_{noise_tunnel_type}_{noise_tunnel_samples}"
+        name += f"_NT_{noise_tunnel_type}_{noise_tunnel_samples}"
     return name
 
 
@@ -72,9 +72,9 @@ def generate_captum_explanations(
         raise ValueError(f"Invalid Captum noise tunnel type: {noise_tunnel_type}")
 
     # Initialize attribution method's kwargs
-    if not method_kwargs:
+    if method_kwargs is None:
         method_kwargs = {}
-    if not attribute_kwargs:
+    if attribute_kwargs is None:
         attribute_kwargs = {}
 
     if not torch.is_tensor(inputs):
@@ -86,20 +86,15 @@ def generate_captum_explanations(
     if inputs.ndim == 3:
         inputs = inputs.unsqueeze(0)
 
-    inputs.to(device)
-    targets.to(device)
+    inputs = inputs.to(device)
+    targets = targets.to(device)
 
     # Set model to evaluation mode
     model.to(device)
     model.eval()
 
     # Initialize attribution method
-    method = None
-
-    try:
-        method = ATTRIBUTION_METHODS[method_name](model, **method_kwargs)
-    except:
-        raise AssertionError(f"Invalid parameter for Captum method: {method_kwargs}")
+    method = ATTRIBUTION_METHODS[method_name](model, **method_kwargs)
 
     if noise_tunnel:
         method = NoiseTunnel(method)
@@ -110,11 +105,9 @@ def generate_captum_explanations(
         _set_lrp_rules(model)
 
     # Perform attribution to batch
-    try:
-        attributions = method.attribute(inputs=inputs, target=targets, **attribute_kwargs)
-        if attributions.requires_grad:
-            return attributions.detach().cpu().numpy()
-        else:
-            return attributions.cpu().numpy()
-    except:
-        raise AssertionError(f"Invalid parameter for Captum attribute function: {attribute_kwargs}")
+    attributions = method.attribute(inputs=inputs, target=targets, **attribute_kwargs)
+    
+    if attributions.requires_grad:
+        return attributions.detach().cpu().numpy()
+    else:
+        return attributions.cpu().numpy()

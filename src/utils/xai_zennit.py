@@ -40,8 +40,8 @@ def generate_zennit_explanations(
 
     targets = F.one_hot(targets, num_classes=2)
 
-    inputs.to(device)
-    targets.to(device)
+    inputs = inputs.to(device)
+    targets = targets.to(device)
 
     # Set model to evaluation mode
     model.to(device)
@@ -53,27 +53,24 @@ def generate_zennit_explanations(
         if composite is None:
             raise ValueError(f"Invalid Zennit composite: {composite_name}")
 
+        # Initialize composite's kwargs
         if not composite_kwargs:
             composite_kwargs = {}
 
-        try:
-            composite = composite(**composite_kwargs)
-        except:
-            raise AssertionError(f"Invalid parameter for Zennit composite: {composite_kwargs}")
+        composite = composite(**composite_kwargs)
 
     method = getattr(attributors, method_name, None)
     if method is None:
         raise ValueError(f"Invalid Zennit attributor: {method_name}")
 
+    # Initialize attributor's kwargs
     if not method_kwargs:
         method_kwargs = {}
 
-    try:
-        with method(model=model, composite=composite if composite else None, **method_kwargs) as attributor:
-            _, attributions = attributor(inputs, targets)
-        if attributions.requires_grad:
-            return attributions.detach().cpu().numpy()
-        else:
-            return attributions.cpu().numpy()
-    except:
-        raise AssertionError(f"Invalid parameter for Zennit attributor: {method_kwargs}")
+    with method(model=model, composite=composite if composite else None, **method_kwargs) as attributor:
+        _, attributions = attributor(inputs, targets)
+    
+    if attributions.requires_grad:
+        return attributions.detach().cpu().numpy()
+    else:
+        return attributions.cpu().numpy()
