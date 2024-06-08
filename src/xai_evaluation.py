@@ -157,8 +157,10 @@ for library, methods in METHODS.items():
     explain_func = generate_captum_explanations if library == "captum" else generate_zennit_explanations
     
     for method, kwargs in methods.items():
-        explanations_loc = get_explanations_loc(library, method)
+        print(f"Evaluating {library}'s {method} explanations")
         
+        explanations_loc = get_explanations_loc(library, method)
+
         results = {}
         for names, inputs, labels, _ in dataloader:
             inputs = inputs.to(device)
