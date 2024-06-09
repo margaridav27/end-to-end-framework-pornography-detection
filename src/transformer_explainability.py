@@ -1,7 +1,7 @@
 from src.utils.misc import set_device
 from src.utils.data import load_split, get_transforms
 from src.utils.model import parse_model_filename, predict
-from src.utils.explainability import save_explanation
+from src.utils.xai import save_explanation
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import src.interpretable_transformers.vit_config as ViTs
