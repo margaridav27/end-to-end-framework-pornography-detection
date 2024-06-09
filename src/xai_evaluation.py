@@ -102,25 +102,25 @@ METRICS = {
         return_aggregate=False
     ),
     "max_sensitivity": quantus.MaxSensitivity(
-        nr_samples=10,
+        nr_samples=5,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
     ),
     "rel_inp_stability": quantus.RelativeInputStability(
-        nr_samples=10,
+        nr_samples=5,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
     ),
     "rel_out_stability": quantus.RelativeOutputStability(
-        nr_samples=10,
+        nr_samples=5,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
     ),
     "rel_rep_stability": quantus.RelativeRepresentationStability(
-        nr_samples=10,
+        nr_samples=5,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
