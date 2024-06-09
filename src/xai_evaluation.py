@@ -2,17 +2,18 @@
 Metrics:
 
 Faithfulness 
-    - Selectivity
     - Faithfulness Correlation
+    - Selectivity
+    - Region Perturbation
 Robustness 
+    - Consistency
     - Max-Sensitivity
-    - Avg-Sensitivity
+    - Relative Input Stability (RIS)
+    - Relative Output Stability (ROS)
     - Relative Representation Stability (RRS)
 Complexity 
     - Sparseness
     - Complexity
-Localisation 
-    - Attribution Localisation
 """
 
 from src.utils.misc import set_device
@@ -36,6 +37,10 @@ INPUT_SHAPE = 224
 NORM_MEAN = [0.485, 0.456, 0.406]
 NORM_STD = [0.229, 0.224, 0.225]
 BATCH_SIZE = 8
+
+DATA_LOC = "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
+RESULTS_LOC = "results/pornography-2k/cnns/data-aug/even-20"
+STATE_DICT_LOC = os.path.join(RESULTS_LOC, "models", "vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth")
 
 METHODS = {
     "captum": {
@@ -68,9 +73,68 @@ METHODS = {
     },
 }
 
-DATA_LOC = "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
-RESULTS_LOC = "results/pornography-2k/cnns/data-aug/even-20"
-STATE_DICT_LOC = os.path.join(RESULTS_LOC, "models", "vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth")
+METRICS = {
+    # Faithfulness
+    "faithfulness_corr": quantus.FaithfulnessCorrelation(
+        nr_runs=100,
+        subset_size=224,
+        perturb_baseline="black",
+        disable_warnings=True,
+        return_aggregate=False,
+    ),
+    "selectivity": Selectivity(
+        patch_size=8,
+        perturb_baseline="black",
+        disable_warnings=True,
+        return_aggregate=False,
+    ),
+    "reg_perturbation": quantus.RegionPerturbation(
+        patch_size=8,
+        order="morf", # most relevant first
+        regions_evaluation=100,
+        perturb_baseline="black",
+        disable_warnings=True,
+        return_aggregate=False,
+    ),
+    # # Robustness
+    "consistency": quantus.Consistency(
+        disable_warnings=True,
+        return_aggregate=False
+    ),
+    "max_sensitivity": quantus.MaxSensitivity(
+        nr_samples=10,
+        return_nan_when_prediction_changes=False,
+        disable_warnings=True,
+        return_aggregate=False,
+    ),
+    "rel_inp_stability": quantus.RelativeInputStability(
+        nr_samples=10,
+        return_nan_when_prediction_changes=False,
+        disable_warnings=True,
+        return_aggregate=False,
+    ),
+    "rel_out_stability": quantus.RelativeOutputStability(
+        nr_samples=10,
+        return_nan_when_prediction_changes=False,
+        disable_warnings=True,
+        return_aggregate=False,
+    ),
+    "rel_rep_stability": quantus.RelativeRepresentationStability(
+        nr_samples=10,
+        return_nan_when_prediction_changes=False,
+        disable_warnings=True,
+        return_aggregate=False,
+    ),
+    # Complexity
+    "sparseness": quantus.Sparseness(
+        disable_warnings=True,
+        return_aggregate=False
+    ),
+    "complexity": quantus.Complexity(
+        disable_warnings=True,
+        return_aggregate=False
+    ),
+}
 
 
 # To get the explanations directory based on library and method
@@ -100,7 +164,10 @@ model.eval()
 
 # Load test data
 data_transforms = get_transforms(
-    data_aug=False, input_shape=INPUT_SHAPE, norm_mean=NORM_MEAN, norm_std=NORM_STD
+    data_aug=False, 
+    input_shape=INPUT_SHAPE, 
+    norm_mean=NORM_MEAN, 
+    norm_std=NORM_STD,
 )["test"]
 dataset = PornographyFrameDataset(
     data_loc=DATA_LOC,
@@ -108,64 +175,26 @@ dataset = PornographyFrameDataset(
     transform=data_transforms,
 )
 dataloader = DataLoader(
-    dataset=dataset, batch_size=BATCH_SIZE, num_workers=8, pin_memory=True
+    dataset=dataset, 
+    batch_size=BATCH_SIZE, 
+    num_workers=8, 
+    pin_memory=True,
 )
-
-
-metrics = {
-    "selectivity": Selectivity(
-        perturb_baseline="mean",
-        patch_size=8,
-        disable_warnings=True,
-        return_aggregate=False,
-    ),
-    "faithfulness_corr": quantus.FaithfulnessCorrelation(
-        perturb_baseline="mean",
-        subset_size=224,
-        nr_runs=100,
-        disable_warnings=True,
-        return_aggregate=False,
-    ),
-    "max_sensitivity": quantus.MaxSensitivity(
-        nr_samples=8,
-        return_nan_when_prediction_changes=False,
-        disable_warnings=True,
-        return_aggregate=False,
-    ),
-    "rrs": quantus.RelativeRepresentationStability(
-        nr_samples=8,
-        return_nan_when_prediction_changes=False,
-        disable_warnings=True,
-        return_aggregate=False,
-    ),
-    "sparseness": quantus.Sparseness(
-        disable_warnings=True,
-        return_aggregate=False
-    ),
-    "complexity": quantus.Complexity(
-        disable_warnings=True,
-        return_aggregate=False
-    ),
-    "attr_localisation": quantus.AttributionLocalisation(
-        disable_warnings=True,
-        return_aggregate=False
-    ),
-}
 
 
 for library, methods in METHODS.items():
     explain_func = generate_captum_explanations if library == "captum" else generate_zennit_explanations
-    
+
     for method, kwargs in methods.items():
         print(f"Evaluating {library}'s {method} explanations")
-        
+
         explanations_loc = get_explanations_loc(library, method)
 
         results = {}
         for names, inputs, labels, _ in dataloader:
             inputs = inputs.to(device)
             labels = labels.to(device)
-            
+
             _, preds = predict(model, inputs)
 
             # Evaluate only on the set of correctly predicted input samples (skip if no correct predictions)
@@ -191,7 +220,12 @@ for library, methods in METHODS.items():
             # Check if there is an explanation for each input
             assert inputs.shape == explanations.shape, "Inputs shape must match explanations shape"
 
-            for key, metric in metrics.items():
+            for key, metric in METRICS.items():
+                # Sparseness and Complexity metrics expect explanations to have channel dimension equal to 1
+                if key in ["sparseness", "complexity"] and explanations.shape[1] != 1:
+                    explanations = np.sum(explanations, axis=1, keepdims=True)
+                    kwargs["reduce_channels"] = True
+
                 scores = metric(
                     model=model,
                     x_batch=inputs.cpu().numpy(),
@@ -210,8 +244,6 @@ for library, methods in METHODS.items():
                     results[key].update(dict(zip(names, scores)))
                 else:
                     results[key] = dict(zip(names, scores))
-
-                print(results)
 
         final_results = {}
         for metric_key, res_values in results.items():

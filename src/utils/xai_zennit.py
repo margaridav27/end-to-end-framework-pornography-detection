@@ -27,6 +27,7 @@ def generate_zennit_explanations(
     method_kwargs: Optional[Dict[str, Any]] = None,
     composite_name: Optional[str] = None,
     composite_kwargs: Optional[Dict[str, Any]] = None,
+    reduce_channels: bool = False,
     device: Optional[str] = None,
 ) -> np.ndarray:
     if not torch.is_tensor(inputs):
@@ -69,8 +70,15 @@ def generate_zennit_explanations(
 
     with method(model=model, composite=composite if composite else None, **method_kwargs) as attributor:
         _, attributions = attributor(inputs, targets)
-    
-    if attributions.requires_grad:
-        return attributions.detach().cpu().numpy()
-    else:
-        return attributions.cpu().numpy()
+
+    if torch.is_tensor(attributions):
+        if attributions.requires_grad:
+            attributions = attributions.detach().cpu().numpy()
+        else:
+            attributions = attributions.cpu().numpy()
+
+    # Reduce channels dimension to 1: BCHW -> B1HW
+    if reduce_channels:
+        attributions = np.sum(attributions, axis=1, keepdims=True)
+
+    return attributions

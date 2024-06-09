@@ -64,6 +64,7 @@ def generate_captum_explanations(
     noise_tunnel: bool = False,
     noise_tunnel_type: str = "SGSQ",
     noise_tunnel_samples: int = 10,
+    reduce_channels: bool = False,
     device: Optional[str] = None,
 ) -> np.ndarray:
     if method_name not in ATTRIBUTION_METHODS.keys():
@@ -107,7 +108,14 @@ def generate_captum_explanations(
     # Perform attribution to batch
     attributions = method.attribute(inputs=inputs, target=targets, **attribute_kwargs)
     
-    if attributions.requires_grad:
-        return attributions.detach().cpu().numpy()
-    else:
-        return attributions.cpu().numpy()
+    if torch.is_tensor(attributions):
+        if attributions.requires_grad:
+            attributions = attributions.detach().cpu().numpy()
+        else:
+            attributions = attributions.cpu().numpy()
+
+    # Reduce channels dimension to 1: BCHW -> B1HW
+    if reduce_channels:
+        attributions = np.sum(attributions, axis=1, keepdims=True)
+
+    return attributions
