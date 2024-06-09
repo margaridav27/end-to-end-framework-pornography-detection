@@ -8,9 +8,9 @@ Faithfulness
 Robustness 
     - Consistency
     - Max-Sensitivity
-    - Relative Input Stability (RIS)
-    - Relative Output Stability (ROS)
-    - Relative Representation Stability (RRS)
+    - Relative Input Stability
+    - Relative Output Stability
+    - Relative Representation Stability
 Complexity 
     - Sparseness
     - Complexity
@@ -36,7 +36,7 @@ from torch.utils.data import DataLoader
 INPUT_SHAPE = 224
 NORM_MEAN = [0.485, 0.456, 0.406]
 NORM_STD = [0.229, 0.224, 0.225]
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 
 DATA_LOC = "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
 RESULTS_LOC = "results/pornography-2k/cnns/data-aug/even-20"
@@ -96,31 +96,31 @@ METRICS = {
         disable_warnings=True,
         return_aggregate=False,
     ),
-    # # Robustness
+    # Robustness
     "consistency": quantus.Consistency(
         disable_warnings=True,
         return_aggregate=False
     ),
     "max_sensitivity": quantus.MaxSensitivity(
-        nr_samples=5,
+        nr_samples=10,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
     ),
     "rel_inp_stability": quantus.RelativeInputStability(
-        nr_samples=5,
+        nr_samples=10,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
     ),
     "rel_out_stability": quantus.RelativeOutputStability(
-        nr_samples=5,
+        nr_samples=10,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
     ),
     "rel_rep_stability": quantus.RelativeRepresentationStability(
-        nr_samples=5,
+        nr_samples=10,
         return_nan_when_prediction_changes=False,
         disable_warnings=True,
         return_aggregate=False,
@@ -190,7 +190,10 @@ for library, methods in METHODS.items():
 
         explanations_loc = get_explanations_loc(library, method)
 
-        results = {}
+        # To ensure that channels dimension is equal to 1 on explain_func call
+        kwargs["reduce_channels"] = True
+
+        results = {}   
         for names, inputs, labels, _ in dataloader:
             inputs = inputs.to(device)
             labels = labels.to(device)
@@ -218,14 +221,13 @@ for library, methods in METHODS.items():
             )
 
             # Check if there is an explanation for each input
-            assert inputs.shape == explanations.shape, "Inputs shape must match explanations shape"
+            assert len(inputs) == len(explanations), "There must be an explanation for each input"
+            
+            # Metrics expect explanations to have channels dimension equal to 1
+            if explanations.shape[1] != 1:
+                explanations = np.sum(explanations, axis=1, keepdims=True)
 
             for key, metric in METRICS.items():
-                # Sparseness and Complexity metrics expect explanations to have channel dimension equal to 1
-                if key in ["sparseness", "complexity"] and explanations.shape[1] != 1:
-                    explanations = np.sum(explanations, axis=1, keepdims=True)
-                    kwargs["reduce_channels"] = True
-
                 scores = metric(
                     model=model,
                     x_batch=inputs.cpu().numpy(),
@@ -233,6 +235,7 @@ for library, methods in METHODS.items():
                     a_batch=explanations,
                     explain_func=explain_func,
                     explain_func_kwargs=kwargs,
+                    softmax=False,
                     device=device,
                     batch_size=len(explanations),
                 )
