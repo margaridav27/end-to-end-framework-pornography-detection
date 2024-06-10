@@ -26,9 +26,11 @@ from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import json
+from typing import List, Tuple
 import numpy as np
 import quantus
 
+import torch
 from torch.utils.data import DataLoader
 
 
@@ -90,7 +92,7 @@ METRICS = {
     ),
     "reg_perturbation": quantus.RegionPerturbation(
         patch_size=8,
-        order="morf", # most relevant first
+        order="morf",  # most relevant first
         regions_evaluation=100,
         perturb_baseline="black",
         disable_warnings=True,
@@ -98,7 +100,7 @@ METRICS = {
     ),
     # Robustness
     "consistency": quantus.Consistency(
-        disable_warnings=True,
+        disable_warnings=True, 
         return_aggregate=False
     ),
     "max_sensitivity": quantus.MaxSensitivity(
@@ -127,18 +129,21 @@ METRICS = {
     ),
     # Complexity
     "sparseness": quantus.Sparseness(
-        disable_warnings=True,
+        disable_warnings=True, 
         return_aggregate=False
     ),
     "complexity": quantus.Complexity(
-        disable_warnings=True,
+        disable_warnings=True, 
         return_aggregate=False
     ),
 }
 
 
-# To get the explanations directory based on library and method
-def get_explanations_loc(library, method):
+def get_explanations_loc(library: str, method: str):
+    """
+    Get the explanations directory based on library and method.
+    """
+
     return os.path.join(
         RESULTS_LOC,
         "explanations",
@@ -149,9 +154,32 @@ def get_explanations_loc(library, method):
     )
 
 
-# To filter out the incorrect predictions
-def filter_correct_predictions(preds, labels):
-    return preds == labels
+def get_correctly_classified(names: List[str], inputs: torch.Tensor, preds: torch.Tensor, explanations_loc: str) -> Tuple[np.ndarray]:
+    """
+    Get explanations for the set of correctly classified input samples.
+    Important: Assumes that explanations_loc only contains explanations for correctly classified input samples.
+    """
+
+    filtered_names = []
+    filtered_inputs = []
+    filtered_preds = []
+    explanations = []
+
+    for i, name in enumerate(names):
+        np_file = os.path.join(explanations_loc, "npys", f"{os.path.splitext(name)[0]}.npy")
+
+        if os.path.isfile(np_file):
+            filtered_names.append(name)
+            filtered_inputs.append(inputs[i])
+            filtered_preds.append(preds[i])
+            explanations.append(np.load(np_file))
+
+    return (
+        np.array(filtered_names),
+        np.array(filtered_inputs),
+        np.array(filtered_preds),
+        np.array(explanations),
+    )
 
 
 # Set device
@@ -164,9 +192,9 @@ model.eval()
 
 # Load test data
 data_transforms = get_transforms(
-    data_aug=False, 
-    input_shape=INPUT_SHAPE, 
-    norm_mean=NORM_MEAN, 
+    data_aug=False,
+    input_shape=INPUT_SHAPE,
+    norm_mean=NORM_MEAN,
     norm_std=NORM_STD,
 )["test"]
 dataset = PornographyFrameDataset(
@@ -175,15 +203,19 @@ dataset = PornographyFrameDataset(
     transform=data_transforms,
 )
 dataloader = DataLoader(
-    dataset=dataset, 
-    batch_size=BATCH_SIZE, 
-    num_workers=8, 
+    dataset=dataset,
+    batch_size=BATCH_SIZE,
+    num_workers=8,
     pin_memory=True,
 )
 
 
 for library, methods in METHODS.items():
-    explain_func = generate_captum_explanations if library == "captum" else generate_zennit_explanations
+    explain_func = (
+        generate_captum_explanations
+        if library == "captum"
+        else generate_zennit_explanations
+    )
 
     for method, kwargs in methods.items():
         print(f"Evaluating {library}'s {method} explanations")
@@ -193,36 +225,17 @@ for library, methods in METHODS.items():
         # To ensure that channels dimension is equal to 1 on explain_func call
         kwargs["reduce_channels"] = True
 
-        results = {}   
-        for names, inputs, labels, _ in dataloader:
+        results = {}
+        for names, inputs, _, _ in dataloader:
             inputs = inputs.to(device)
-            labels = labels.to(device)
-
             _, preds = predict(model, inputs)
 
-            # Evaluate only on the set of correctly predicted input samples (skip if no correct predictions)
-            mask = filter_correct_predictions(preds, labels)
-            if mask.sum() == 0:
-                continue
-
-            names = [name for name, m in zip(names, mask) if m]
-            inputs, preds = inputs[mask], preds[mask]
-
-            # Get corresponding explanations
-            explanations = np.array(
-                [
-                    np.load(
-                        os.path.join(
-                            explanations_loc, "npys", f"{os.path.splitext(name)[0]}.npy"
-                        )
-                    )
-                    for name in names
-                ]
+            filtered_names, filtered_inputs, filtered_preds, explanations = (
+                get_correctly_classified(
+                    names, inputs.cpu(), preds.cpu(), explanations_loc
+                )
             )
 
-            # Check if there is an explanation for each input
-            assert len(inputs) == len(explanations), "There must be an explanation for each input"
-            
             # Metrics expect explanations to have channels dimension equal to 1
             if explanations.shape[1] != 1:
                 explanations = np.sum(explanations, axis=1, keepdims=True)
@@ -230,8 +243,8 @@ for library, methods in METHODS.items():
             for key, metric in METRICS.items():
                 scores = metric(
                     model=model,
-                    x_batch=inputs.cpu().numpy(),
-                    y_batch=preds.cpu().numpy(),
+                    x_batch=filtered_inputs,
+                    y_batch=filtered_preds,
                     a_batch=explanations,
                     explain_func=explain_func,
                     explain_func_kwargs=kwargs,
@@ -244,9 +257,9 @@ for library, methods in METHODS.items():
                     scores = metric.get_auc_score
 
                 if key in results:
-                    results[key].update(dict(zip(names, scores)))
+                    results[key].update(dict(zip(filtered_names, scores)))
                 else:
-                    results[key] = dict(zip(names, scores))
+                    results[key] = dict(zip(filtered_names, scores))
 
         final_results = {}
         for metric_key, res_values in results.items():
