@@ -125,6 +125,7 @@ def init_data(
     input_shape: int,
     norm_mean: List[float],
     norm_std: List[float],
+    shuffle_dataloader: bool = False,
 ):
     data_transforms = get_transforms(data_aug, input_shape, norm_mean, norm_std)
 
@@ -142,7 +143,13 @@ def init_data(
         for p in partitions
     }
     dataloaders = {
-        p: DataLoader(dataset=datasets[p], batch_size=batch_size, num_workers=8)
+        p: DataLoader(
+            dataset=datasets[p], 
+            batch_size=batch_size, 
+            shuffle=shuffle_dataloader,
+            num_workers=8, 
+            pin_memory=True
+        )
         for p in partitions
     }
     dataset_sizes = {p: len(datasets[p]) for p in partitions}
