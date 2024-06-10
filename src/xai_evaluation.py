@@ -154,7 +154,12 @@ def get_explanations_loc(library: str, method: str):
     )
 
 
-def get_correctly_classified(names: List[str], inputs: torch.Tensor, preds: torch.Tensor, explanations_loc: str) -> Tuple[np.ndarray]:
+def get_correctly_classified(
+    names: List[str], 
+    inputs: torch.Tensor, 
+    preds: torch.Tensor, 
+    explanations_loc: str
+):
     """
     Get explanations for the set of correctly classified input samples.
     Important: Assumes that explanations_loc only contains explanations for correctly classified input samples.
@@ -175,7 +180,7 @@ def get_correctly_classified(names: List[str], inputs: torch.Tensor, preds: torc
             explanations.append(np.load(np_file))
 
     return (
-        np.array(filtered_names),
+        filtered_names,
         np.array(filtered_inputs),
         np.array(filtered_preds),
         np.array(explanations),
@@ -235,6 +240,8 @@ for library, methods in METHODS.items():
                     names, inputs.cpu(), preds.cpu(), explanations_loc
                 )
             )
+
+            if len(filtered_names) == 0: continue
 
             # Metrics expect explanations to have channels dimension equal to 1
             if explanations.shape[1] != 1:
