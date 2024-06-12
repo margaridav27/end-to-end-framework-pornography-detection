@@ -1,4 +1,4 @@
-"""This module contains the implementation of the Selectivity metric."""
+"""This module contains the implementation of the Selectivity and RegionPerturbation metrics."""
 
 import itertools
 from typing import Any, Callable, Dict, List, Optional
@@ -7,7 +7,7 @@ import numpy as np
 
 from quantus.metrics.base import Metric
 from quantus.functions.perturb_func import baseline_replacement_by_indices
-from quantus.helpers import plotting, utils, warn
+from quantus.helpers import asserts, plotting, utils, warn
 from quantus.helpers.model.model_interface import ModelInterface
 from quantus.helpers.perturbation_utils import make_perturb_func
 from quantus.helpers.enums import (
