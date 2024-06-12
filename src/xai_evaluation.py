@@ -6,7 +6,6 @@ Faithfulness
     - Selectivity
     - Region Perturbation
 Robustness 
-    - Consistency
     - Max-Sensitivity
     - Relative Input Stability
     - Relative Output Stability
@@ -21,7 +20,7 @@ from src.utils.data import load_split, get_transforms
 from src.utils.model import parse_model_filename, load_model, predict
 from src.utils.xai_captum import generate_captum_explanations
 from src.utils.xai_zennit import generate_zennit_explanations
-from src.utils.xai_evaluation import Selectivity
+from src.utils.xai_evaluation import Selectivity, RegionPerturbation
 from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
@@ -45,24 +44,7 @@ RESULTS_LOC = "results/pornography-2k/cnns/data-aug/even-20"
 STATE_DICT_LOC = os.path.join(RESULTS_LOC, "models", "vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth")
 
 METHODS = {
-    "captum": {
-        "IG": {"method_name": "IG"},
-        "DEEP-LIFT": {"method_name": "DEEP-LIFT"},
-        "LRP": {"method_name": "LRP"},
-        "LRP-CMP": {"method_name": "LRP-CMP"},
-        "OCC": {
-            "method_name": "OCC",
-            "attribute_kwargs": {
-                "sliding_window_shapes": (3, 8, 8),
-                "strides": (3, 4, 4),
-            },
-        },
-    },
     "zennit": {
-        "IntegratedGradients": {
-            "method_name": "IntegratedGradients",
-            "method_kwargs": {"n_iter": 50},
-        },
         "Gradient_EpsilonGammaBox": {
             "method_name": "Gradient",
             "composite_name": "EpsilonGammaBox",
@@ -71,6 +53,23 @@ METHODS = {
         "Gradient_EpsilonPlusFlat": {
             "method_name": "Gradient",
             "composite_name": "EpsilonPlusFlat",
+        },
+        "IntegratedGradients": {
+            "method_name": "IntegratedGradients",
+            "method_kwargs": {"n_iter": 50},
+        },
+    },
+    "captum": {
+        "LRP": {"method_name": "LRP"},
+        "LRP-CMP": {"method_name": "LRP-CMP"},
+        "IG": {"method_name": "IG"},
+        "DEEP-LIFT": {"method_name": "DEEP-LIFT"},
+        "OCC": {
+            "method_name": "OCC",
+            "attribute_kwargs": {
+                "sliding_window_shapes": (3, 8, 8),
+                "strides": (3, 4, 4),
+            },
         },
     },
 }
@@ -90,7 +89,7 @@ METRICS = {
         disable_warnings=True,
         return_aggregate=False,
     ),
-    "reg_perturbation": quantus.RegionPerturbation(
+    "reg_perturbation": RegionPerturbation(
         patch_size=8,
         order="morf",  # most relevant first
         regions_evaluation=100,
@@ -99,10 +98,6 @@ METRICS = {
         return_aggregate=False,
     ),
     # Robustness
-    "consistency": quantus.Consistency(
-        disable_warnings=True, 
-        return_aggregate=False
-    ),
     "max_sensitivity": quantus.MaxSensitivity(
         nr_samples=10,
         return_nan_when_prediction_changes=False,
@@ -248,6 +243,8 @@ for library, methods in METHODS.items():
                 explanations = np.sum(explanations, axis=1, keepdims=True)
 
             for key, metric in METRICS.items():
+                print("Metric:", key)
+
                 scores = metric(
                     model=model,
                     x_batch=filtered_inputs,
@@ -260,13 +257,15 @@ for library, methods in METHODS.items():
                     batch_size=len(explanations),
                 )
 
-                if key == "selectivity":
+                if key == "selectivity" or key == "reg_perturbation":
                     scores = metric.get_auc_score
 
                 if key in results:
                     results[key].update(dict(zip(filtered_names, scores)))
                 else:
                     results[key] = dict(zip(filtered_names, scores))
+
+                print(results)
 
         final_results = {}
         for metric_key, res_values in results.items():
