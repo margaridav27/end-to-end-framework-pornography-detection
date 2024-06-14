@@ -5,7 +5,6 @@ from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 import os
 import argparse
 import json
-import cv2
 import albumentations as A
 
 import torch
