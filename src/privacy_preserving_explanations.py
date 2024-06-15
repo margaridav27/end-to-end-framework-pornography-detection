@@ -141,7 +141,8 @@ def _parse_arguments():
     return args
 
 
-def main(args):
+def main():
+    args = _parse_arguments()
 
     H = W = args.input_shape
     img_area = H * W
@@ -229,7 +230,8 @@ def main(args):
                 neg_attr=neg_attr
             )
 
-            if area != 0: _blur_box(img, (x1, y1, x2, y2))
+            if (args.save or args.show) and area != 0: 
+                _blur_box(img, (x1, y1, x2, y2))
 
         if args.save: # Save blurred explanation
             fig = visualize_explanation(
@@ -261,5 +263,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = _parse_arguments()
-    main(args)
+    main()
