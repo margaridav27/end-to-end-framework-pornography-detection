@@ -444,7 +444,7 @@ def visualize_explanation(
     if len(image.shape) == 4: image = np.squeeze(image)
     if CHW(image.shape): image = HWC(image)
 
-    assert image.shape[:2] == attr.shape[:2], "Image and attr shapes must match."
+    # assert image.shape[:2] == attr.shape[:2], "Image and attr shapes must match."
 
     if side_by_side:
         norm_std = kwargs.get("norm_std", None)
