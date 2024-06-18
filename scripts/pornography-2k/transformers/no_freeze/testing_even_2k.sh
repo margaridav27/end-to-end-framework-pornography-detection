@@ -19,14 +19,6 @@ python -m src.transformer_testing \
        --save_loc "$save_loc" \
        --model_name "vit_base_patch16_224" \
        --state_dict_loc "$state_dict_loc/vit_base_patch16_224_epochs_50_batch_16_optim_sgd_aug_False_split_10_20.pth"
-
-echo "Testing vit_large_patch16_224"
-python -m src.transformer_testing \
-       --data_loc "$data_loc" \
-       --save_loc "$save_loc" \
-       --model_name "vit_large_patch16_224" \
-       --state_dict_loc "$state_dict_loc/vit_large_patch16_224_epochs_50_batch_16_optim_sgd_aug_False_split_10_20.pth" \
-       --batch_size 8
        
 echo "Testing deit_base_patch16_224"
 python -m src.transformer_testing \

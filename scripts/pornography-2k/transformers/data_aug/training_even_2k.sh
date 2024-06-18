@@ -25,17 +25,6 @@ python -m src.transformer_training \
        --data_aug \
        --wandb
 
-echo "Training vit_large_patch16_224"
-python -m src.transformer_training \
-       --project_title "$project_title" \
-       --data_loc "$data_loc" \
-       --model_save_loc "$model_save_loc" \
-       --metrics_save_loc "$metrics_save_loc" \
-       --model_name "vit_large_patch16_224" \
-       --pretrained \
-       --data_aug \
-       --wandb
-
 echo "Training deit_base_patch16_224"
 python -m src.transformer_training \
        --project_title "$project_title" \
