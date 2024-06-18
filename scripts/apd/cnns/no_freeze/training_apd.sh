@@ -123,5 +123,5 @@ python -m src.model_training \
        --metrics_save_loc "$metrics_save_loc" \
        --model_name "mobilenet_v2" \
        --epochs $epochs \
-       --batch_size 512 \
+       --batch_size 256 \
        --wandb
