@@ -81,7 +81,7 @@ def main():
             _, pred = predict(model, input.unsqueeze(0))
             print(f"Prediction for '{name}': {pred.item()}")
 
-            attr = generate_attribution(model=model, image=input, label=label)
+            attr = generate_attribution(model=model, input=input, label=label)
             save_explanation(
                 save_loc=os.path.join(
                     args.save_loc,
@@ -108,7 +108,7 @@ def main():
             _, pred = predict(model, input.unsqueeze(0))
             print(f"Prediction for '{image_name}': {pred.item()}")
 
-            attr = generate_attribution(model=model, image=input, label=label)
+            attr = generate_attribution(model=model, input=input, label=label)
             save_explanation(
                 save_loc=os.path.join(
                     args.save_loc,

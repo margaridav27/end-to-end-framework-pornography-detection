@@ -25,7 +25,7 @@ from src.datasets.pornography_frame_dataset import PornographyFrameDataset
 
 import os
 import json
-from typing import List, Tuple
+from typing import List
 import numpy as np
 import quantus
 
@@ -45,15 +45,15 @@ STATE_DICT_LOC = os.path.join(RESULTS_LOC, "models", "vgg19_freeze_False_epochs_
 
 METHODS = {
     "zennit": {
-        "Gradient_EpsilonGammaBox": {
-            "method_name": "Gradient",
-            "composite_name": "EpsilonGammaBox",
-            "composite_kwargs": {"low": -2.12, "high": 2.64},
-        },
-        "Gradient_EpsilonPlusFlat": {
-            "method_name": "Gradient",
-            "composite_name": "EpsilonPlusFlat",
-        },
+        # "Gradient_EpsilonGammaBox": {
+        #     "method_name": "Gradient",
+        #     "composite_name": "EpsilonGammaBox",
+        #     "composite_kwargs": {"low": -2.12, "high": 2.64},
+        # },
+        # "Gradient_EpsilonPlusFlat": {
+        #     "method_name": "Gradient",
+        #     "composite_name": "EpsilonPlusFlat",
+        # },
         "IntegratedGradients": {
             "method_name": "IntegratedGradients",
             "method_kwargs": {"n_iter": 50},
@@ -243,8 +243,6 @@ for library, methods in METHODS.items():
                 explanations = np.sum(explanations, axis=1, keepdims=True)
 
             for key, metric in METRICS.items():
-                print("Metric:", key)
-
                 scores = metric(
                     model=model,
                     x_batch=filtered_inputs,
@@ -264,8 +262,6 @@ for library, methods in METHODS.items():
                     results[key].update(dict(zip(filtered_names, scores)))
                 else:
                     results[key] = dict(zip(filtered_names, scores))
-
-                print(results)
 
         final_results = {}
         for metric_key, res_values in results.items():

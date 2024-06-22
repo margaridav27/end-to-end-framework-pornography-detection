@@ -444,16 +444,16 @@ def visualize_explanation(
     if len(image.shape) == 4: image = np.squeeze(image)
     if CHW(image.shape): image = HWC(image)
 
-    # assert image.shape[:2] == attr.shape[:2], "Image and attr shapes must match."
+    assert image.shape[:2] == attr.shape[:2], "Image and attr shapes must match."
+    
+    norm_std = kwargs.get("norm_std", None)
+    norm_mean = kwargs.get("norm_mean", None)
+
+    # Unnormalize for better visualization
+    if norm_std and norm_mean:
+        image = unnormalize(image, norm_mean, norm_std)
 
     if side_by_side:
-        norm_std = kwargs.get("norm_std", None)
-        norm_mean = kwargs.get("norm_mean", None)
-
-        # Unnormalize for better visualization
-        if norm_std and norm_mean:
-            image = unnormalize(image, norm_mean, norm_std)
-
         return visualize_image_attr_multiple(
             attr=attr,
             original_image=image,

@@ -55,9 +55,9 @@ def _blur_box(image, box_coords):
 
     roi = image[y1:y2, x1:x2]
     if len(roi) == 0: return
-    KSIZE, SIGMA = (9, 9), 15
+    KSIZE, SIGMA = (15, 15), 21
     roi = cv2.GaussianBlur(roi, KSIZE, SIGMA)
-    
+
     image[y1:y2, x1:x2] = roi
 
 
