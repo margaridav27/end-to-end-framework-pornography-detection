@@ -440,12 +440,13 @@ def visualize_explanation(
     if CHW(attr.shape): attr = HWC(attr)
 
     # Convert image to numpy array of shape (H, W, C)
-    if torch.is_tensor(image): image = image.cpu().numpy()
+    if torch.is_tensor(image): 
+        image = image.detach().cpu().numpy() if image.requires_grad else image.cpu().numpy()
     if len(image.shape) == 4: image = np.squeeze(image)
     if CHW(image.shape): image = HWC(image)
 
     assert image.shape[:2] == attr.shape[:2], "Image and attr shapes must match."
-    
+
     norm_std = kwargs.get("norm_std", None)
     norm_mean = kwargs.get("norm_mean", None)
 

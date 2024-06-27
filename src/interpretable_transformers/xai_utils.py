@@ -14,13 +14,17 @@ seed()
 
 
 # Source: https://github.com/hila-chefer/Transformer-Explainability/blob/main/Transformer_explainability.ipynb
-# Function: Generate transformer attribution
+# Function: Generate Transformer Attribution
 def generate_attribution(
     model: nn.Module,
     input: Union[torch.Tensor, np.array],
     label: Optional[Union[torch.Tensor, int]] = None,
+    expand_dims: bool = False,
+    **kwargs,
 ):
-    device = next(model.parameters()).device
+    device = kwargs.get("device", None)
+    if device is None:
+        device = next(model.parameters()).device
 
     if not torch.is_tensor(input):
         input = torch.tensor(input)
@@ -53,20 +57,25 @@ def generate_attribution(
         .numpy()
     )
 
+    if expand_dims:
+        attr = np.expand_dims(attr, axis=0)
+
     # Normalization - no need as we are plotting visualizations with Captum
     # attr = (attr - attr.min()) / (attr.max() - attr.min())
 
     return attr
 
 
+# Function: Wrapper for compatibility with Quantus
 def generate_transformer_explanations(
     model: nn.Module,
     inputs: np.ndarray,
-    targets: np.ndarray
+    targets: np.ndarray,
+    **kwargs,
 ):
-    explanations = np.zeros_like(inputs)
-
-    for i, (input, target) in enumerate(np.stack((inputs, targets), axis=-1)):
-        explanations[i] = generate_attribution(model, input, target)
-    
-    return explanations
+    return np.array(
+        [
+            generate_attribution(model, inputs[i], targets[i], **kwargs)
+            for i in range(len(targets))
+        ]
+    )

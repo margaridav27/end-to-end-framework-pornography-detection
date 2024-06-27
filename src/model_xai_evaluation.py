@@ -17,7 +17,7 @@ Complexity
 
 from src.utils.misc import set_device
 from src.utils.data import load_split, get_transforms
-from src.utils.model import parse_model_filename, load_model, predict
+from src.utils.model import parse_model_filename, load_model
 from src.utils.xai_captum import generate_captum_explanations
 from src.utils.xai_zennit import generate_zennit_explanations
 from src.utils.xai_evaluation import Selectivity, RegionPerturbation
@@ -41,7 +41,8 @@ BATCH_SIZE = 4
 
 DATA_LOC = "/nas-ctm01/datasets/public/BIOMETRICS/pornography-2k-db/data-processed/even-20"
 RESULTS_LOC = "results/pornography-2k/cnns/data-aug/even-20"
-STATE_DICT_LOC = os.path.join(RESULTS_LOC, "models", "vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20.pth")
+MODEL_NAME = "vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20"
+STATE_DICT_LOC = os.path.join(RESULTS_LOC, "models", MODEL_NAME + ".pth")
 
 METHODS = {
     "zennit": {
@@ -142,7 +143,7 @@ def get_explanations_loc(library: str, method: str):
     return os.path.join(
         RESULTS_LOC,
         "explanations",
-        "vgg19_freeze_False_epochs_50_batch_16_optim_sgd_aug_True_split_10_20",
+        MODEL_NAME,
         library,
         "correct",
         method,
@@ -182,7 +183,6 @@ def get_correctly_classified(
     )
 
 
-# Set device
 device = set_device()
 
 # Load model
@@ -226,33 +226,28 @@ for library, methods in METHODS.items():
         kwargs["reduce_channels"] = True
 
         results = {}
-        for names, inputs, _, _ in dataloader:
-            inputs = inputs.to(device)
-            _, preds = predict(model, inputs)
-
-            filtered_names, filtered_inputs, filtered_preds, explanations = (
-                get_correctly_classified(
-                    names, inputs.cpu(), preds.cpu(), explanations_loc
-                )
+        for names, inputs, labels, _ in dataloader:
+            filtered_names, x_batch, y_batch, a_batch = get_correctly_classified(
+                names, inputs, labels, explanations_loc
             )
 
             if len(filtered_names) == 0: continue
 
             # Metrics expect explanations to have channels dimension equal to 1
-            if explanations.shape[1] != 1:
-                explanations = np.sum(explanations, axis=1, keepdims=True)
+            if a_batch.shape[1] != 1:
+                a_batch = np.sum(a_batch, axis=1, keepdims=True)
 
             for key, metric in METRICS.items():
                 scores = metric(
                     model=model,
-                    x_batch=filtered_inputs,
-                    y_batch=filtered_preds,
-                    a_batch=explanations,
+                    x_batch=x_batch,
+                    y_batch=y_batch,
+                    a_batch=a_batch,
                     explain_func=explain_func,
                     explain_func_kwargs=kwargs,
                     softmax=False,
                     device=device,
-                    batch_size=len(explanations),
+                    batch_size=len(a_batch),
                 )
 
                 if key == "selectivity" or key == "reg_perturbation":

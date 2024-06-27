@@ -43,6 +43,7 @@ def generate_explanations(
         generator_kwargs["method_kwargs"] = method_cfg.get("method_kwargs", {})
         generator_kwargs["composite_name"] = method_cfg.get("composite_name", None)
         generator_kwargs["composite_kwargs"] = method_cfg.get("composite_kwargs", {})
+        generator_kwargs["canonizer_name"] = method_cfg.get("canonizer_name", None)
 
     if not generator_kwargs["method_name"]:
         raise ValueError("No method was provided to generate the attributions")

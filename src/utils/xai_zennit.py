@@ -11,6 +11,9 @@ from zennit.composites import *
 import zennit.attribution as attributors
 from zennit.attribution import *
 
+import zennit.torchvision as canonizers
+from zennit.torchvision import *
+
 
 def get_zennit_method_name(method_name: str, composite_name: Optional[str] = None):
     name = f"{method_name}"
@@ -27,6 +30,7 @@ def generate_zennit_explanations(
     method_kwargs: Optional[Dict[str, Any]] = None,
     composite_name: Optional[str] = None,
     composite_kwargs: Optional[Dict[str, Any]] = None,
+    canonizer_name: Optional[str] = None,
     reduce_channels: bool = False,
     device: Optional[str] = None,
 ) -> np.ndarray:
@@ -39,6 +43,7 @@ def generate_zennit_explanations(
     if inputs.ndim == 3:
         inputs = inputs.unsqueeze(0)
 
+    # Required by Zennit
     targets = F.one_hot(targets, num_classes=2)
 
     inputs = inputs.to(device)
@@ -57,6 +62,13 @@ def generate_zennit_explanations(
         # Initialize composite's kwargs
         if not composite_kwargs:
             composite_kwargs = {}
+
+        if canonizer_name:
+            canonizer = getattr(canonizers, canonizer_name, None)
+            if canonizer is None:
+                raise ValueError(f"Invalid Zennit canonizer: {canonizer_name}")
+
+            composite_kwargs["canonizers"] = [canonizer()]
 
         composite = composite(**composite_kwargs)
 
