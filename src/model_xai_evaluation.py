@@ -262,7 +262,12 @@ for library, methods in METHODS.items():
         for metric_key, res_values in results.items():
             res_values_list = list(res_values.values())
 
-            if metric_key in ["rrs", "max_sensitivity"]:
+            if metric_key in [
+                "max_sensitivity",
+                "rel_inp_stability",
+                "rel_out_stability",
+                "rel_rep_stability",
+            ]:
                 final_results[metric_key] = np.max(res_values_list, axis=0)
             else:
                 final_results[metric_key] = np.mean(res_values_list, axis=0)
