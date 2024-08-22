@@ -19,10 +19,31 @@ from torch.utils.data import DataLoader
 
 def _parse_arguments():
     parser = argparse.ArgumentParser(description="Testing a trained pytorch model")
-    parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--save_loc", type=str, required=True)
-    parser.add_argument("--model_name", type=str, required=True)
-    parser.add_argument("--state_dict_loc", type=str, required=True)
+    parser.add_argument(
+        "--data_loc",
+        type=str,
+        required=True,
+        help="Directory path where the test dataset is stored.",
+    )
+    parser.add_argument(
+        "--save_loc",
+        type=str,
+        required=True,
+        help="Directory where the test results, including predictions and confusion matrix, will be saved.",
+    )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        required=True,
+        help="""Name of the model architecture that was used during training.
+                This argument is required to correctly load the corresponding model configuration.""",
+    )
+    parser.add_argument(
+        "--state_dict_loc",
+        type=str,
+        required=True,
+        help="File path to the saved state dictionary (checkpoint) of the trained model.",
+    )
     parser.add_argument("--batch_size", type=int, default=16)
 
     args = parser.parse_args()

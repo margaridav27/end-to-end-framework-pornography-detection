@@ -14,14 +14,29 @@ from torch.utils.data import DataLoader
 
 def _parse_arguments():
     parser = argparse.ArgumentParser(description="Testing a trained pytorch model")
-    parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--save_loc", type=str, required=True)
-    parser.add_argument("--state_dict_loc", type=str, required=True)
+    parser.add_argument(
+        "--data_loc",
+        type=str,
+        required=True,
+        help="Directory path where the test dataset is stored.",
+    )
+    parser.add_argument(
+        "--save_loc",
+        type=str,
+        required=True,
+        help="Directory where the test results, including predictions and confusion matrix, will be saved.",
+    )
+    parser.add_argument(
+        "--state_dict_loc",
+        type=str,
+        required=True,
+        help="File path to the saved state dictionary (checkpoint) of the trained model.",
+    )
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--input_shape", type=int, default=224)
     parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
     parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
-    
+
     args = parser.parse_args()
 
     if not os.path.exists(args.state_dict_loc):
@@ -29,7 +44,7 @@ def _parse_arguments():
 
     return args
 
-    
+
 def _get_test_dataloader(
     data_loc : str, 
     split : List[float], 

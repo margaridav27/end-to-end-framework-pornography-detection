@@ -18,14 +18,62 @@ import torch.nn as nn
 
 def _parse_arguments():
     parser = argparse.ArgumentParser(description="Generating explanations for a transformer's predictions")
-    parser.add_argument("--model_name", type=str, required=True)
-    parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--state_dict_loc", type=str, required=True)
-    parser.add_argument("--save_loc", type=str, required=True)
-    parser.add_argument("--to_explain", type=str, nargs="*", default=[], help="Frame names for which an explanation is desired. If no names are given, an explanation for each prediction will be generated.")
-    parser.add_argument("--side_by_side", action="store_true", default=False)
-    parser.add_argument("--show_colorbar", action="store_true", default=False)
-    parser.add_argument("--colormap", type=str, default="jet")
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        required=True,
+        choices=[
+            "vit_base_patch16_224",
+            "vit_large_patch16_224",
+            "deit_base_patch16_224",
+        ],
+        help="""Name of the transformer model architecture used for predictions.
+              Required to load the correct model configuration.""",
+    )
+    parser.add_argument(
+        "--data_loc",
+        type=str,
+        required=True,
+        help="Directory path where the test dataset is stored.",
+    )
+    parser.add_argument(
+        "--state_dict_loc",
+        type=str,
+        required=True,
+        help="File path to the saved state dictionary (checkpoint) of the trained model.",
+    )
+    parser.add_argument(
+        "--save_loc",
+        type=str,
+        required=True,
+        help="Directory where the generated explanations will be saved.",
+    )
+    parser.add_argument(
+        "--to_explain",
+        type=str,
+        nargs="*",
+        default=[],
+        help="""A list of specific frame names for which to generate explanations.
+                If no names are provided, explanations will be generated for all predictions.""",
+    )
+    parser.add_argument(
+        "--side_by_side",
+        action="store_true",
+        default=False,
+        help="If set to True, the original image and the generated attribution map will be saved side-by-side.",
+    )
+    parser.add_argument(
+        "--show_colorbar",
+        action="store_true",
+        default=False,
+        help="If set to True, a colorbar indicating attribution intensity will be included in the saved image.",
+    )
+    parser.add_argument(
+        "--colormap",
+        type=str,
+        default="jet",
+        help="Colormap to use for visualizing the attribution map.",
+    )
     parser.add_argument("--outlier_perc", default=2)
     parser.add_argument("--alpha_overlay", type=float, default=0.5)
 

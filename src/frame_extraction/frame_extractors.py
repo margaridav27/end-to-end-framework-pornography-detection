@@ -1,9 +1,7 @@
 import os
 import math
 import cv2 as cv
-import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
 
 
 class FrameExtractor:
@@ -28,7 +26,7 @@ class MiddleFrameExtractor(FrameExtractor):
 
         for loc in data_loc:
             assert os.path.exists(loc) and os.path.isdir(loc), "Invalid --data_loc argument."
-        
+
         assert os.path.exists(save_loc) and os.path.isdir(save_loc), "Invalid --save_loc argument."
 
         self.data_loc = data_loc
@@ -84,9 +82,13 @@ class EvenFrameExtractor(FrameExtractor):
         super().__init__()
 
         for loc in data_loc:
-            assert os.path.exists(loc) and os.path.isdir(loc), "Invalid --data_loc argument."
-       
-        assert os.path.exists(save_loc) and os.path.isdir(save_loc), "Invalid --save_loc argument."
+            assert os.path.exists(loc) and os.path.isdir(
+                loc
+            ), "Invalid --data_loc argument."
+
+        assert os.path.exists(save_loc) and os.path.isdir(
+            save_loc
+        ), "Invalid --save_loc argument."
 
         self.data_loc = data_loc
         self.save_loc = save_loc
@@ -111,7 +113,9 @@ class EvenFrameExtractor(FrameExtractor):
 
                     frame_count = self._get_frame_count(video)
                     real_n_frames = self.n_frames
-                    ignore_frames = math.floor(frame_count * self.perc)  # Number of frames to be ignored at the beginning and at the end
+                    ignore_frames = math.floor(
+                        frame_count * self.perc
+                    )  # Number of frames to be ignored at the beginning and at the end
 
                     if self.n_frames > frame_count:
                         real_n_frames = frame_count
@@ -121,10 +125,11 @@ class EvenFrameExtractor(FrameExtractor):
                             f"Extracting {frame_count} frames instead"
                         )
 
-                    while (frame_count - 2 * ignore_frames < real_n_frames and ignore_frames > 0):
+                    while frame_count - 2 * ignore_frames < real_n_frames and ignore_frames > 0:
                         ignore_frames //= 2
 
-                    interval = max((frame_count - 2 * ignore_frames) // real_n_frames, 1)  # Interval at which frames are to be extracted
+                    # Interval at which frames are to be extracted
+                    interval = max((frame_count - 2 * ignore_frames) // real_n_frames, 1)
 
                     frame_i = 0
 
@@ -147,9 +152,7 @@ class EvenFrameExtractor(FrameExtractor):
                         if frame_i % interval == 0:
                             frame_name = f"{v.split('.')[0]}#{len(extracted_frames)}.jpg"
                             frame_label = 0 if "NonPorn" in v else 1
-
                             extracted_frames[frame_name] = frame_label
-
                             cv.imwrite(f"{self.save_loc}/{frame_name}", frame)
 
                         frame_i += 1

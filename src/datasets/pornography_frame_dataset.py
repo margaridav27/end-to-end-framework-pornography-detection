@@ -7,10 +7,16 @@ from torch.utils.data import Dataset
 
 
 class PornographyFrameDataset(Dataset):
-    def __init__(self, data_loc: str, df: pd.DataFrame, transform: A.Compose = None, subset: float = 1.0):
+    def __init__(
+        self,
+        data_loc: str,
+        df: pd.DataFrame,
+        transform: A.Compose = None,
+        subset: float = 1.0,
+    ):
         self.data_loc = data_loc
 
-        assert subset > 0.0 and subset <= 1.0, "Invalid value for parameter subset. Must be a value between 0 and 1."
+        assert (subset > 0.0 and subset <= 1.0), "Invalid value for parameter subset. Must be a value between 0 and 1."
 
         if subset < 1.0:
             df = self.sample_subset(df, subset)
@@ -34,7 +40,11 @@ class PornographyFrameDataset(Dataset):
 
         frame_name = index if isinstance(index, str) else self.frames[index]
         frame_path = f"{self.data_loc}/{frame_name}"
-        frame_label = self.frame_label_dict[frame_name] if isinstance(index, str) else self.labels[index]
+        frame_label = (
+            self.frame_label_dict[frame_name]
+            if isinstance(index, str)
+            else self.labels[index]
+        )
 
         frame = cv2.imread(frame_path)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

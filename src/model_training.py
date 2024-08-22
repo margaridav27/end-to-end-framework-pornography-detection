@@ -15,24 +15,72 @@ import wandb
 
 def _parse_arguments():
     parser = argparse.ArgumentParser(description="Training a pytorch model to classify pornographic content")
-    parser.add_argument("--project_title", type=str, required=True)
-    parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--model_save_loc", type=str, required=True)
-    parser.add_argument("--metrics_save_loc", type=str, required=True)
+    parser.add_argument(
+        "--project_title",
+        type=str,
+        required=True,
+        help="""Title of the project when logging experiments to Weights & Biases (W&B).
+                Required if the --wandb flag is set to True.""",
+    )
+    parser.add_argument(
+        "--data_loc",
+        type=str,
+        required=True,
+        help="Directory path where the dataset is stored",
+    )
+    parser.add_argument(
+        "--model_save_loc",
+        type=str,
+        required=True,
+        help="Directory where the trained model's checkpoint will be saved.",
+    )
+    parser.add_argument(
+        "--metrics_save_loc",
+        type=str,
+        required=True,
+        help="Directory where the training metrics will be saved.",
+    )
     parser.add_argument("--model_name", type=str, default="resnet50")
-    parser.add_argument("--weights", type=str, default="IMAGENET1K_V1")
-    parser.add_argument("--freeze_layers", action="store_true", default=False)
+    parser.add_argument(
+        "--weights",
+        type=str,
+        default="IMAGENET1K_V1",
+        help="Weights to initialize the model with. The default 'IMAGENET1K_V1' uses pretrained weights on ImageNet.",
+    )
+    parser.add_argument(
+        "--freeze_layers",
+        action="store_true",
+        default=False,
+        help="If set, freezes the layers of the model except for the final layers.",
+    )
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--optimizer", type=str, default="sgd")
-    parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
-    parser.add_argument("--data_aug", action="store_true", default=False)
+    parser.add_argument(
+        "--split",
+        type=float,
+        nargs="*",
+        default=[0.1, 0.2],
+        help="The fractions of the dataset to use for validation and testing, respectively.",
+    )
+    parser.add_argument(
+        "--data_aug",
+        action="store_true",
+        default=False,
+        help="If set, applies data augmentation techniques to the training data.",
+    )
     parser.add_argument("--input_shape", type=int, default=224)
     parser.add_argument("--norm_mean", type=float, nargs="*", default=[0.485, 0.456, 0.406])
     parser.add_argument("--norm_std", type=float, nargs="*", default=[0.229, 0.224, 0.225])
-    parser.add_argument("--wandb", action="store_true", default=False)
-
+    parser.add_argument(
+        "--wandb",
+        action="store_true",
+        default=False,
+        help="""If set, enables logging to Weights & Biases (W&B).
+                Requires --project_title to be specified.""",
+    )
+    
     return parser.parse_args()
 
 

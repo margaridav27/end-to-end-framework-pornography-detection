@@ -13,15 +13,52 @@ from ultralytics import YOLO
 
 def _parse_arguments():
     parser = argparse.ArgumentParser(description="YOLO face detection")
-    parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--save_loc", type=str, help="Directory to save the results")
-    parser.add_argument("--weights", type=str, default="yolov8m-face.pt")
-    parser.add_argument("--conf_thres", type=float, default=0.6, help="Object confidence threshold")
+    parser.add_argument(
+        "--data_loc",
+        type=str,
+        required=True,
+        help="Directory path where the input images are stored.",
+    )
+    parser.add_argument(
+        "--save_loc",
+        type=str,
+        help="""Directory where the detection results (as JSON files) will be saved. 
+                This argument is required if the --save flag is set to True.""",
+    )
+    parser.add_argument(
+        "--weights",
+        type=str,
+        default="yolov8-weights/yolov8m-face.pt",
+        help="Path to the YOLO model weights file.",
+    )
+    parser.add_argument(
+        "--conf_thres",
+        type=float,
+        default=0.6,
+        help="""The confidence threshold for detecting objects (faces). 
+                Detections with a confidence score below this threshold will be discarded.""",
+    )
     parser.add_argument("--input_shape", type=int)
     parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--to_detect", type=str, nargs="*")
-    parser.add_argument("--show", action="store_true", default=False)
-    parser.add_argument("--save", action="store_true", default=False)
+    parser.add_argument(
+        "--to_detect",
+        type=str,
+        nargs="*",
+        help="""A list of specific image filenames (within --data_loc) to run face detection on. 
+                If not provided, all images in the --data_loc directory will be processed.""",
+    )
+    parser.add_argument(
+        "--show",
+        action="store_true",
+        default=False,
+        help="If set, the detected results (with bounding boxes) will be displayed on the screen.",
+    )
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        default=False,
+        help="If set, the detection results will be saved as JSON files in the specified --save_loc directory.",
+    )
 
     args = parser.parse_args()
 
@@ -40,7 +77,8 @@ def _parse_arguments():
 def main():
     args = _parse_arguments()
 
-    if not (args.show or args.save): return 
+    if not (args.show or args.save):
+        return
 
     device = set_device()
 
@@ -66,7 +104,8 @@ def main():
         print(f"{filename}: {n_detected} faces detected")
 
         # Check if any bounding boxes were detected
-        if n_detected == 0: continue
+        if n_detected == 0:
+            continue
 
         # Discard the keypoints
         result.keypoints = None

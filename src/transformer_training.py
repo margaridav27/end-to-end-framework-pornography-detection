@@ -18,20 +18,78 @@ import wandb
 
 def _parse_arguments():
     parser = argparse.ArgumentParser(description="Training a transformer to classify pornographic content")
-    parser.add_argument("--project_title", type=str)
-    parser.add_argument("--data_loc", type=str, required=True)
-    parser.add_argument("--model_save_loc", type=str, required=True)
-    parser.add_argument("--metrics_save_loc", type=str, required=True)
-    parser.add_argument("--model_name", type=str, default="vit_base_patch16_224")
-    parser.add_argument("--pretrained", action="store_true", default=False)
-    parser.add_argument("--depth", type=int, default=12, help="Number of hidden layers")
+    parser.add_argument(
+        "--project_title",
+        type=str,
+        help="""Title of the project when logging experiments to Weights & Biases (W&B).
+                Required if the --wandb flag is set to True.""",
+    )
+    parser.add_argument(
+        "--data_loc",
+        type=str,
+        required=True,
+        help="Directory path where the dataset is stored",
+    )
+    parser.add_argument(
+        "--model_save_loc",
+        type=str,
+        required=True,
+        help="Directory where the trained model's checkpoint will be saved.",
+    )
+    parser.add_argument(
+        "--metrics_save_loc",
+        type=str,
+        required=True,
+        help="Directory where the training metrics will be saved.",
+    )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        default="vit_base_patch16_224",
+        choices=[
+            "vit_base_patch16_224",
+            "vit_large_patch16_224",
+            "deit_base_patch16_224",
+        ],
+        help="""The name of the transformer model configuration to use.
+                The script will attempt to load this model configuration from the vit_config module.""",
+    )
+    parser.add_argument(
+        "--pretrained",
+        action="store_true",
+        default=False,
+        help="If set, loads a pretrained version of the specified transformer model.",
+    )
+    parser.add_argument(
+        "--depth",
+        type=int,
+        default=12,
+        help="Number of hidden layers in the model.",
+    )
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--optimizer", type=str, default="sgd", choices=["sgd", "adam"])
-    parser.add_argument("--split", type=float, nargs="*", default=[0.1, 0.2], help="Validation and test")
-    parser.add_argument("--data_aug", action="store_true", default=False)
-    parser.add_argument("--wandb", action="store_true", default=False)
+    parser.add_argument(
+        "--split",
+        type=float,
+        nargs="*",
+        default=[0.1, 0.2],
+        help="The fractions of the dataset to use for validation and testing, respectively.",
+    )
+    parser.add_argument(
+        "--data_aug",
+        action="store_true",
+        default=False,
+        help="If set, applies data augmentation techniques to the training data.",
+    )
+    parser.add_argument(
+        "--wandb",
+        action="store_true",
+        default=False,
+        help="""If set, enables logging to Weights & Biases (W&B).
+                Requires --project_title to be specified.""",
+    )
 
     args = parser.parse_args()
 
